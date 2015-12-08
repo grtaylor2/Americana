@@ -81,6 +81,24 @@ function get_the_content_limit( $max_characters, $more_link_text = '(more...)', 
 }
 
 /**
+ * Return more link text plus hidden title for screen readers, to improve accessibility.
+ *
+ * @since 2.2.0
+ *
+ * @param string  $more_link_text Text of the more link.
+ *
+ * @return string $more_link_text with or withput the hidden title.
+ */
+ function genesis_a11y_more_link( $more_link_text )  {
+
+ 	if ( genesis_a11y( 'screen-reader-text' ) && ! empty( $more_link_text ) ) {
+		$more_link_text .= ' <span class="screen-reader-text">' . __( 'about ', 'genesis' ) . get_the_title() . '</span>';
+ 	}
+ 	return $more_link_text;
+
+ }
+
+/**
  * Echo the limited content.
  *
  * @since 0.1.0
@@ -170,6 +188,40 @@ function genesis_strip_attr( $text, $elements, $attributes, $two_passes = true )
 		$text = preg_replace( $patterns, '$1$2', $text );
 
 	return $text;
+
+}
+
+/**
+ * Return the special URL of a paged post.
+ *
+ * Taken from _wp_link_page() in WordPress core, but instead of anchor markup, just return the URL.
+ *
+ * @since 2.2.0
+ *
+ * @param int $i The page number to generate the URL from.
+ * @param int $post_id The post ID
+ *
+ * @return string Unescaped URL
+ */
+function genesis_paged_post_url( $i, $post_id = 0 ) {
+
+	global $wp_rewrite;
+
+	$post = get_post( $post_id );
+
+	if ( 1 == $i ) {
+		$url = get_permalink( $post_id );
+	} else {
+		if ( '' == get_option( 'permalink_structure' ) || in_array( $post->post_status, array( 'draft', 'pending' ) ) ) {
+			$url = add_query_arg( 'page', $i, get_permalink( $post_id ) );
+		} elseif ( 'page' == get_option( 'show_on_front' ) && get_option( 'page_on_front' ) == $post->ID ) {
+			$url = trailingslashit( get_permalink( $post_id ) ) . user_trailingslashit( "$wp_rewrite->pagination_base/" . $i, 'single_paged' );
+		} else {
+			$url = trailingslashit( get_permalink( $post_id ) ) . user_trailingslashit( $i, 'single_paged' );
+		}
+	}
+
+	return $url;
 
 }
 
@@ -285,13 +337,13 @@ function genesis_human_time_diff( $older_date, $newer_date = false ) {
 
 	//* Hold units of time in seconds, and their pluralised strings (not translated yet)
 	$units = array(
-		array( 31536000, _nx_noop( '%s year', '%s years', 'time difference' ) ),  // 60 * 60 * 24 * 365
-		array( 2592000, _nx_noop( '%s month', '%s months', 'time difference' ) ), // 60 * 60 * 24 * 30
-		array( 604800, _nx_noop( '%s week', '%s weeks', 'time difference' ) ),    // 60 * 60 * 24 * 7
-		array( 86400, _nx_noop( '%s day', '%s days', 'time difference' ) ),       // 60 * 60 * 24
-		array( 3600, _nx_noop( '%s hour', '%s hours', 'time difference' ) ),      // 60 * 60
-		array( 60, _nx_noop( '%s minute', '%s minutes', 'time difference' ) ),
-		array( 1, _nx_noop( '%s second', '%s seconds', 'time difference' ) ),
+		array( 31536000, _nx_noop( '%s year', '%s years', 'time difference', 'genesis' ) ),  // 60 * 60 * 24 * 365
+		array( 2592000, _nx_noop( '%s month', '%s months', 'time difference', 'genesis' ) ), // 60 * 60 * 24 * 30
+		array( 604800, _nx_noop( '%s week', '%s weeks', 'time difference', 'genesis' ) ),    // 60 * 60 * 24 * 7
+		array( 86400, _nx_noop( '%s day', '%s days', 'time difference', 'genesis' ) ),       // 60 * 60 * 24
+		array( 3600, _nx_noop( '%s hour', '%s hours', 'time difference', 'genesis' ) ),      // 60 * 60
+		array( 60, _nx_noop( '%s minute', '%s minutes', 'time difference', 'genesis' ) ),
+		array( 1, _nx_noop( '%s second', '%s seconds', 'time difference', 'genesis' ) ),
 	);
 
 	//* Step one: the first unit
@@ -299,7 +351,7 @@ function genesis_human_time_diff( $older_date, $newer_date = false ) {
 		$seconds = $units[$i][0];
 
 		//* Finding the biggest chunk (if the chunk fits, break)
-		if ( ( $count = floor( $since / $seconds ) ) !== 0 )
+		if ( ( $count = floor( $since / $seconds ) ) != 0 )
 			break;
 	}
 

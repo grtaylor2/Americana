@@ -37,7 +37,11 @@ function genesis_disable_seo() {
 	remove_action( 'genesis_meta','genesis_seo_meta_keywords' );
 	remove_action( 'genesis_meta','genesis_robots_meta' );
 	remove_action( 'wp_head','genesis_canonical', 5 );
-	remove_action( 'wp_head', 'genesis_rel_author' );
+	remove_action( 'wp_head', 'genesis_meta_name' );
+	remove_action( 'wp_head', 'genesis_meta_url' );
+	remove_action( 'wp_head', 'genesis_paged_rel' );
+	remove_filter( 'genesis_attr_head', 'genesis_attributes_head' );
+	add_filter( 'genesis_attr_head', 'genesis_attributes_empty_class' );
 
 	remove_action( 'admin_menu', 'genesis_add_inpost_seo_box' );
 	remove_action( 'save_post', 'genesis_inpost_seo_save', 1, 2 );
@@ -73,7 +77,7 @@ function genesis_seo_disabled() {
 
 }
 
-add_action( 'after_setup_theme', 'genesis_seo_compatibility_check', 5 );
+add_action( 'after_setup_theme', 'genesis_seo_compatibility_check' );
 /**
  * Check for the existence of popular SEO plugins and disable the Genesis SEO features if one or more of the plugins
  * is active.
@@ -122,9 +126,9 @@ function genesis_scribe_nag() {
 	if ( genesis_detect_plugin( array( 'classes' => array( 'Ecordia' ) ) ) || get_option( 'genesis-scribe-nag-disabled' ) )
 		return;
 
-	$copy = sprintf( __( 'Have you tried our Scribe content marketing software? Do research, content and website optimization, and relationship building without leaving WordPress. <b>Genesis owners save big when using the special link on the special page we\'ve created just for you</b>. <a href="%s" target="_blank">Click here for more info</a>.', 'genesis' ), 'http://scribecontent.com/genesis-owners-only' );
-
-	printf( '<div class="scribe-nag updated"><p class="alignleft">%s</p> <p class="alignright"><a href="%s">%s</a></p></div>', $copy, add_query_arg( 'dismiss-scribe', 'true', menu_page_url( 'seo-settings', false ) ), __( 'Dismiss', 'genesis' ) );
+	$copy = sprintf( __( 'Have you tried our Scribe content marketing software? Do research, content and website optimization, and relationship building without leaving WordPress. <strong>Genesis owners save big when using the special link on the special page we\'ve created just for you</strong>. <a href="%s" target="_blank">Click here for more info on Scribe<span class="screen-reader-text">. %s</span></a>.', 'genesis' ), 'http://scribecontent.com/genesis-owners-only', __( 'Link opens in a new window.', 'genesis' ) );
+	$url = add_query_arg( 'dismiss-scribe', 'true', menu_page_url( 'seo-settings', false ) );
+	printf( '<div class="scribe-nag updated"><p class="alignleft">%s</p> <p class="alignright"><a href="%s">%s</a></p></div>', $copy, esc_url( $url ), __( 'Dismiss', 'genesis' ) );
 
 }
 

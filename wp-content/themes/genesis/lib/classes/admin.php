@@ -101,7 +101,6 @@ abstract class Genesis_Admin {
 		$this->page_ops = wp_parse_args(
 			$this->page_ops,
 			array(
-				'screen_icon'       => 'options-general',
 				'save_button_text'  => __( 'Save Settings', 'genesis' ),
 				'reset_button_text' => __( 'Reset Settings', 'genesis' ),
 				'saved_notice_text' => __( 'Settings saved.', 'genesis' ),
@@ -129,6 +128,12 @@ abstract class Genesis_Admin {
 
 		//* Load the page content (metaboxes or custom form)
 		add_action( 'admin_init', array( $this, 'settings_init' ) );
+
+		//* Load help tab
+		add_action( 'admin_init', array( $this, 'load_help' ) );
+
+		//* Load contextual assets (registered admin page)
+		add_action( 'admin_init', array( $this, 'load_assets' ) );
 
 		//* Add a sanitizer/validator
 		add_filter( 'pre_update_option_' . $this->settings_field, array( $this, 'save' ), 10, 2 );
@@ -307,6 +312,38 @@ abstract class Genesis_Admin {
 	abstract public function settings_init();
 
 	/**
+	 * Load the optional help method, if one exists.
+	 *
+	 * @since 2.1.0
+	 */
+	public function load_help() {
+
+		if ( method_exists( $this, 'help' ) ) {
+			add_action( "load-{$this->pagehook}", array( $this, 'help' ) );
+		}
+
+	}
+
+	/**
+	 * Load script and stylesheet assets via scripts() and styles() methods, if they exist.
+	 *
+	 * @since 2.1.0
+	 */
+	public function load_assets() {
+
+		//* Hook scripts method
+		if ( method_exists( $this, 'scripts' ) ) {
+			add_action( "load-{$this->pagehook}", array( $this, 'scripts' ) );
+		}
+
+		//* Hook styles method
+		if ( method_exists( $this, 'styles' ) ) {
+			add_action( "load-{$this->pagehook}", array( $this, 'styles' ) );
+		}
+
+	}
+
+	/**
 	 * Output the main admin page.
 	 *
 	 * This method must be re-defined in the extended class, to output the main
@@ -338,6 +375,22 @@ abstract class Genesis_Admin {
 	}
 
 	/**
+	 * Echo constructed name attributes in form fields.
+	 *
+	 * @since 2.1.0
+	 *
+	 * @uses Genesis_Admin:get_field_name() Construct name attributes for use in form fields.
+	 *
+	 * @param string $name Field name base
+	 * @return string Full field name
+	 */
+	protected function field_name( $name ) {
+
+		echo $this->get_field_name( $name );
+
+	}
+
+	/**
 	 * Helper function that constructs id attributes for use in form fields.
 	 *
 	 * @since 1.8.0
@@ -348,6 +401,22 @@ abstract class Genesis_Admin {
 	protected function get_field_id( $id ) {
 
 		return sprintf( '%s[%s]', $this->settings_field, $id );
+
+	}
+
+	/**
+	 * Echo constructed id attributes in form fields.
+	 *
+	 * @since 2.1.0
+	 *
+	 * @uses Genesis_Admin::get_field_id() Constructs id attributes for use in form fields.
+	 *
+	 * @param string $id Field id base
+	 * @return string Full field id
+	 */
+	protected function field_id( $id ) {
+
+		echo $this->get_field_id( $id );
 
 	}
 
@@ -363,6 +432,22 @@ abstract class Genesis_Admin {
 	protected function get_field_value( $key ) {
 
 		return genesis_get_option( $key, $this->settings_field );
+
+	}
+
+	/**
+	 * Echo a setting value from this form's settings field for use in form fields.
+	 *
+	 * @uses Genesis_Admin::get_field_value() Constructs value attributes for use in form fields.
+	 *
+	 * @since 2.1.0
+	 *
+	 * @param string $key Field key
+	 * @return string Field value
+	 */
+	protected function field_value( $key ) {
+
+		echo $this->get_field_value( $key );
 
 	}
 
@@ -402,13 +487,12 @@ abstract class Genesis_Admin_Form extends Genesis_Admin {
 	public function admin() {
 
 		?>
-		<div class="wrap">
+		<div class="wrap genesis-form">
 		<form method="post" action="options.php">
 
 			<?php settings_fields( $this->settings_field ); ?>
 
-			<?php screen_icon( $this->page_ops['screen_icon'] ); ?>
-			<h2><?php echo esc_html( get_admin_page_title() ); ?></h2>
+			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 			<p class="top-buttons">
 				<?php
 				submit_button( $this->page_ops['save_button_text'], 'primary', 'submit', false );
@@ -416,7 +500,7 @@ abstract class Genesis_Admin_Form extends Genesis_Admin {
 				?>
 			</p>
 
-			<?php do_action( $this->pagehook . '_settings_page_form', $this->pagehook ); ?>
+			<?php do_action( "{$this->pagehook}_settings_page_form", $this->pagehook ); ?>
 
 			<div class="bottom-buttons">
 				<?php
@@ -437,9 +521,7 @@ abstract class Genesis_Admin_Form extends Genesis_Admin {
 	 */
 	public function settings_init() {
 
-		add_action( $this->pagehook . '_settings_page_form', array( $this, 'form' ) );
-		if ( method_exists( $this, 'help' ) )
-			add_action( 'load-' . $this->pagehook, array( $this, 'help' ) );
+		add_action( "{$this->pagehook}_settings_page_form", array( $this, 'form' ) );
 
 	}
 
@@ -481,26 +563,6 @@ abstract class Genesis_Admin_Boxes extends Genesis_Admin {
 	}
 
 	/**
-	 * Make the sortable UI a single column.
-	 *
-	 * @since 1.8.0
-	 *
-	 * @param integer $columns
-	 * @param string $screen The unique ID of the screen
-	 * @return array
-	 */
-	public function layout_columns( $columns, $screen ) {
-
-		if ( $screen === $this->pagehook ) {
-			//* This page should only have 1 column option
-			$columns[$this->pagehook] = 1;
-		}
-
-		return $columns;
-
-	}
-
-	/**
 	 * Use this as the settings admin callback to create an admin page with sortable metaboxes.
 	 * Create a 'settings_boxes' method to add metaboxes.
 	 *
@@ -516,8 +578,7 @@ abstract class Genesis_Admin_Boxes extends Genesis_Admin {
 			<?php wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false ); ?>
 			<?php settings_fields( $this->settings_field ); ?>
 
-			<?php screen_icon( $this->page_ops['screen_icon'] ); ?>
-			<h2><?php echo esc_html( get_admin_page_title() ); ?></h2>
+			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 			<p class="top-buttons">
 				<?php
 				submit_button( $this->page_ops['save_button_text'], 'primary', 'submit', false, array( 'id' => '' ) );
@@ -525,7 +586,7 @@ abstract class Genesis_Admin_Boxes extends Genesis_Admin {
 				?>
 			</p>
 
-			<?php do_action( $this->pagehook . '_settings_page_boxes', $this->pagehook ); ?>
+			<?php do_action( "{$this->pagehook}_settings_page_boxes", $this->pagehook ); ?>
 
 			<div class="bottom-buttons">
 				<?php
@@ -557,6 +618,8 @@ abstract class Genesis_Admin_Boxes extends Genesis_Admin {
 	 * metabox-holder and postbox-container.
 	 *
 	 * @since 2.0.0
+	 *
+	 * @global array $wp_meta_boxes Holds all metaboxes data.
 	 */
 	public function do_metaboxes() {
 
@@ -578,18 +641,18 @@ abstract class Genesis_Admin_Boxes extends Genesis_Admin {
 	}
 
 	/**
-	 * Initialize the settings page, by enqueuing scripts
+	 * Initialize the settings page.
 	 *
 	 * @since 1.8.0
 	 */
 	public function settings_init() {
 
-		add_action( 'load-' . $this->pagehook, array( $this, 'scripts' ) );
 		add_action( 'load-' . $this->pagehook, array( $this, 'metaboxes' ) );
-		add_filter( 'screen_layout_columns', array( $this, 'layout_columns' ), 10, 2 );
 		add_action( $this->pagehook . '_settings_page_boxes', array( $this, 'do_metaboxes' ) );
-		if ( method_exists( $this, 'help' ) )
-			add_action( 'load-' . $this->pagehook, array( $this, 'help' ) );
+
+		if ( method_exists( $this, 'layout_columns' ) ) {
+			add_filter( 'screen_layout_columns', array( $this, 'layout_columns' ), 10, 2 );
+		}
 
 	}
 
@@ -616,12 +679,7 @@ abstract class Genesis_Admin_Basic extends Genesis_Admin {
 	 *
 	 * @since 1.8.0
 	 */
-	public function settings_init() {
-
-		if ( method_exists( $this, 'help' ) )
-			add_action( 'load-' . $this->pagehook, array( $this, 'help' ) );
-
-	}
+	public function settings_init() {}
 
 }
 

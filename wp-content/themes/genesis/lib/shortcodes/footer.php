@@ -80,7 +80,7 @@ function genesis_footer_copyright_shortcode( $atts ) {
 	);
 	$atts = shortcode_atts( $defaults, $atts, 'footer_copyright' );
 
-	$output = $atts['before'] . $atts['copyright'] . ' ';
+	$output = $atts['before'] . $atts['copyright'] . '&nbsp;';
 
 	if ( '' != $atts['first'] && date( 'Y' ) != $atts['first'] )
 		$output .= $atts['first'] . '&#x02013;';
@@ -117,7 +117,7 @@ function genesis_footer_childtheme_link_shortcode( $atts ) {
 	);
 	$atts = shortcode_atts( $defaults, $atts, 'footer_childtheme_link' );
 
-	$output = sprintf( '%s<a href="%s" title="%s">%s</a>%s', $atts['before'], esc_url( CHILD_THEME_URL ), esc_attr( CHILD_THEME_NAME ), esc_html( CHILD_THEME_NAME ), $atts['after'] );
+	$output = sprintf( '%s<a href="%s">%s</a>%s', $atts['before'], esc_url( CHILD_THEME_URL ), esc_html( CHILD_THEME_NAME ), $atts['after'] );
 
 	return apply_filters( 'genesis_footer_childtheme_link_shortcode', $output, $atts );
 
@@ -143,11 +143,11 @@ function genesis_footer_genesis_link_shortcode( $atts ) {
 	$defaults = array(
 		'after'  => '',
 		'before' => '',
-		'url'    => 'http://my.studiopress.com/themes/genesis',
+		'url'    => 'http://my.studiopress.com/themes/genesis/',
 	);
 	$atts = shortcode_atts( $defaults, $atts, 'footer_genesis_link' );
 
-	$output = $atts['before'] . '<a href="' . esc_url( $atts['url'] ) . '" title="Genesis Framework">Genesis Framework</a>' . $atts['after'];
+	$output = $atts['before'] . '<a href="' . esc_url( $atts['url'] ) . '">Genesis Framework</a>' . $atts['after'];
 
 	return apply_filters( 'genesis_footer_genesis_link_shortcode', $output, $atts );
 
@@ -205,7 +205,7 @@ function genesis_footer_wordpress_link_shortcode( $atts ) {
 	);
 	$atts = shortcode_atts( $defaults, $atts, 'footer_wordpress_link' );
 
-	$output = sprintf( '%s<a href="%s" title="%s">%s</a>%s', $atts['before'], 'http://wordpress.org/', 'WordPress', 'WordPress', $atts['after'] );
+	$output = sprintf( '%s<a href="%s">%s</a>%s', $atts['before'], 'http://wordpress.org/', 'WordPress', $atts['after'] );
 
 	return apply_filters( 'genesis_footer_wordpress_link_shortcode', $output, $atts );
 

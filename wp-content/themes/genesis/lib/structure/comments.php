@@ -22,23 +22,20 @@ add_action( 'genesis_after_entry', 'genesis_get_comments_template' );
  *
  * @uses genesis_get_option() Get theme setting value.
  *
- * @global WP_Post $post Post object.
- *
  * @return null Return early if post type does not support comments.
  */
 function genesis_get_comments_template() {
 
-	global $post;
-
-	if ( ! post_type_supports( $post->post_type, 'comments' ) )
+	if ( ! post_type_supports( get_post_type(), 'comments' ) )
 		return;
 
-	if ( is_singular() && ! in_array( $post->post_type, array( 'post', 'page' ) ) )
+	if ( is_singular() && ! in_array( get_post_type(), array( 'post', 'page' ) ) ) {
 		comments_template( '', true );
-	elseif ( is_singular( 'post' ) && ( genesis_get_option( 'trackbacks_posts' ) || genesis_get_option( 'comments_posts' ) ) )
+	} elseif ( is_singular( 'post' ) && ( genesis_get_option( 'trackbacks_posts' ) || genesis_get_option( 'comments_posts' ) ) ) {
 		comments_template( '', true );
-	elseif ( is_singular( 'page' ) && ( genesis_get_option( 'trackbacks_pages' ) || genesis_get_option( 'comments_pages' ) ) )
+	} elseif ( is_singular( 'page' ) && ( genesis_get_option( 'trackbacks_pages' ) || genesis_get_option( 'comments_pages' ) ) ) {
 		comments_template( '', true );
+	}
 
 }
 
@@ -55,14 +52,13 @@ add_action( 'genesis_comments', 'genesis_do_comments' );
  *
  * @uses genesis_get_option() Get theme setting value.
  *
- * @global WP_Post  $post     Post object.
  * @global WP_Query $wp_query Query object.
  *
  * @return null Return early if on a page with Genesis pages comments off, or on a post with Genesis posts comments off.
  */
 function genesis_do_comments() {
 
-	global $post, $wp_query;
+	global $wp_query;
 
 	//* Bail if comments are off for this post type
 	if ( ( is_page() && ! genesis_get_option( 'comments_pages' ) ) || ( is_single() && ! genesis_get_option( 'comments_posts' ) ) )
@@ -77,7 +73,7 @@ function genesis_do_comments() {
 		) );
 
 		echo apply_filters( 'genesis_title_comments', __( '<h3>Comments</h3>', 'genesis' ) );
-		echo '<ol class="comment-list">';
+		printf( '<ol %s>', genesis_attr( 'comment-list' ) );
 			do_action( 'genesis_list_comments' );
 		echo '</ol>';
 
@@ -104,7 +100,7 @@ function genesis_do_comments() {
 
 	}
 	//* No comments so far
-	elseif ( 'open' === $post->comment_status && $no_comments_text = apply_filters( 'genesis_no_comments_text', '' ) ) {
+	elseif ( 'open' === get_post()->comment_status && $no_comments_text = apply_filters( 'genesis_no_comments_text', '' ) ) {
 		if ( genesis_html5() )
 			echo sprintf( '<div %s>', genesis_attr( 'entry-comments' ) ) . $no_comments_text . '</div>';
 		else
@@ -286,7 +282,7 @@ function genesis_html5_comment_callback( $comment, array $args, $depth ) {
 
 		<?php do_action( 'genesis_before_comment' ); ?>
 
-		<header class="comment-header">
+		<header <?php echo genesis_attr( 'comment-header' ); ?>>
 			<p <?php echo genesis_attr( 'comment-author' ); ?>>
 				<?php
 				echo get_avatar( $comment, $args['avatar_size'] );
@@ -295,26 +291,66 @@ function genesis_html5_comment_callback( $comment, array $args, $depth ) {
 				$url    = get_comment_author_url();
 
 				if ( ! empty( $url ) && 'http://' !== $url ) {
-					$author = sprintf( '<a href="%s" rel="external nofollow" itemprop="url">%s</a>', esc_url( $url ), $author );
+					$author = sprintf( '<a href="%s" %s>%s</a>', esc_url( $url ), genesis_attr( 'comment-author-link' ), $author );
 				}
 
-				printf( '<span itemprop="name">%s</span> <span class="says">%s</span>', $author, apply_filters( 'comment_author_says_text', __( 'says', 'genesis' ) ) );
-				?>
-		 	</p>
+				/**
+				 * Filter the "comment author says" text.
+				 *
+				 * Allows developer to filter the "comment author says" text so it can say something different, or nothing at all.
+				 *
+				 * @since unknown
+				 * 
+				 * @param string $text Comment author says text.
+				 */
+				$comment_author_says_text = apply_filters( 'comment_author_says_text', __( 'says', 'genesis' ) );
 
-			<p class="comment-meta">
-				<?php
-				$pattern = '<time itemprop="commentTime" datetime="%s"><a href="%s" itemprop="url">%s %s %s</a></time>';
-				printf( $pattern, esc_attr( get_comment_time( 'c' ) ), esc_url( get_comment_link( $comment->comment_ID ) ), esc_html( get_comment_date() ), __( 'at', 'genesis' ), esc_html( get_comment_time() ) );
+				if ( ! empty( $comment_author_says_text ) ) {
+					$comment_author_says_text = '<span class="says">' . $comment_author_says_text . '</span>';
+				}
 
-				edit_comment_link( __( '(Edit)', 'genesis' ), ' ' );
+				printf( '<span itemprop="name">%s</span> %s', $author, $comment_author_says_text );
 				?>
 			</p>
+
+			<?php
+			/**
+			 * Allows developer to control whether to print the comment date.
+			 *
+			 * @since 2.2.0
+			 *
+			 * @param boolean $comment_date Whether to print the comment date
+			 * @param string  $post_type    The current post type
+			 */
+			$comment_date = apply_filters( 'genesis_show_comment_date', true, get_post_type() );
+
+			if ( $comment_date ) {
+				printf( '<p %s>', genesis_attr( 'comment-meta' ) );
+				printf( '<time %s>', genesis_attr( 'comment-time' ) );
+				printf( '<a href="%s" %s>', esc_url( get_comment_link( $comment->comment_ID ) ), genesis_attr( 'comment-time-link' ) );
+				echo    esc_html( get_comment_date() ) . ' ' . __( 'at', 'genesis' ) . ' ' . esc_html( get_comment_time() );
+				echo    '</a></time></p>';
+			}
+
+			edit_comment_link( __( '(Edit)', 'genesis' ), ' ' );
+			?>
 		</header>
 
-		<div class="comment-content" itemprop="commentText">
+		<div <?php echo genesis_attr( 'comment-content' ); ?>>
 			<?php if ( ! $comment->comment_approved ) : ?>
-				<p class="alert"><?php echo apply_filters( 'genesis_comment_awaiting_moderation', __( 'Your comment is awaiting moderation.', 'genesis' ) ); ?></p>
+				<?php
+				/**
+				 * Filter the "comment awaiting moderation" text.
+				 *
+				 * Allows developer to filter the "comment awaiting moderation" text so it can say something different, or nothing at all.
+				 *
+				 * @since unknown
+				 * 
+				 * @param string $text Comment awaiting moderation text.
+				 */
+				$comment_awaiting_moderation_text = apply_filters( 'genesis_comment_awaiting_moderation', __( 'Your comment is awaiting moderation.', 'genesis' ) );
+				?>
+				<p class="alert"><?php echo $comment_awaiting_moderation_text; ?></p>
 			<?php endif; ?>
 
 			<?php comment_text(); ?>
@@ -323,7 +359,7 @@ function genesis_html5_comment_callback( $comment, array $args, $depth ) {
 		<?php
 		comment_reply_link( array_merge( $args, array(
 			'depth'  => $depth,
-			'before' => '<div class="comment-reply">',
+			'before' => sprintf( '<div %s>', genesis_attr( 'comment-reply' ) ),
 			'after'  => '</div>',
 		) ) );
 		?>

@@ -36,7 +36,7 @@ class Genesis_Settings_Sanitizer {
 	 *
 	 * @var array Options
 	 */
-	var $options = array();
+	public $options = array();
 
 	/**
 	 * Constructor.
@@ -47,7 +47,13 @@ class Genesis_Settings_Sanitizer {
 
 		self::$instance =& $this;
 
-		//* Announce that the sanitizer is ready, and pass the object (for advanced use)
+		/**
+		 * Fires when Genesis_Settings_Sanitizer is initialized.
+		 *
+		 * @since 1.7.0
+		 *
+		 * @param Genesis_Settings_Sanitizer $this The Genesis_Settings_Sanitizer object.
+		 */
 		do_action_ref_array( 'genesis_settings_sanitizer_init', array( &$this ) );
 
 	}
@@ -126,8 +132,16 @@ class Genesis_Settings_Sanitizer {
 			'safe_html'                => array( $this, 'safe_html'                ),
 			'requires_unfiltered_html' => array( $this, 'requires_unfiltered_html' ),
 			'url'                      => array( $this, 'url'                      ),
+			'email_address'            => array( $this, 'email_address'            ),
 		);
 
+		/**
+		 * Filter the available sanitization filter types.
+		 *
+		 * @since 1.7.0
+		 *
+		 * @param array $default_filters Array with keys of sanitization types, and values of the filter function name as a callback
+		 */
 		return apply_filters( 'genesis_available_sanitizer_filters', $default_filters );
 
 	}
@@ -223,6 +237,20 @@ class Genesis_Settings_Sanitizer {
 	function url( $new_value ) {
 
 		return esc_url_raw( $new_value );
+
+	}
+
+	/**
+	 * Makes Email Addresses safe, via sanitize_email()
+	 *
+	 * @since 2.1.0
+	 *
+	 * @param string $new_value String, an email address, possibly unsafe
+	 * @return string String a safe email address
+	 */
+	function email_address( $new_value ) {
+
+		return sanitize_email( $new_value );
 
 	}
 

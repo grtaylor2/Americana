@@ -11,6 +11,33 @@
  * @link    http://my.studiopress.com/themes/genesis/
  */
 
+add_filter( 'nav_menu_link_attributes', 'genesis_nav_menu_link_attributes', 10, 3 );
+/**
+ * Pass nav menu link attributes through attribute parser.
+ *
+ * Adds nav menu link attributes via the Genesis markup API.
+ *
+ * @since 2.2.0
+ *
+ * @param array $atts {
+ *		The HTML attributes applied to the menu item's <a>, empty strings are ignored.
+ *
+ *		@type string $title Title attribute.
+ *		@type string $target Target attribute.
+ *		@type string $rel The rel attribute.
+ *		@type string $href The href attribute.
+ * }
+ * @param object $item The current menu item.
+ * @param array $args An array of wp_nav_menu() arguments.
+ *
+ * @return array Maybe modified menu attributes array.
+ */
+function genesis_nav_menu_link_attributes( $atts, $item, $args ) {
+
+	return genesis_parse_attr( 'nav-link', $atts );
+
+}
+
 add_action( 'after_setup_theme', 'genesis_register_nav_menus' );
 /**
  * Register the custom menu locations, if theme has support for them.
@@ -28,10 +55,7 @@ function genesis_register_nav_menus() {
 
 	$menus = get_theme_support( 'genesis-menus' );
 
-	//* Register supported menus
-	foreach ( (array) $menus[0] as $id => $name ) {
-		register_nav_menu( $id, $name );
-	}
+	register_nav_menus( (array) $menus[0] );
 
 	do_action( 'genesis_register_nav_menus' );
 
@@ -41,61 +65,33 @@ add_action( 'genesis_after_header', 'genesis_do_nav' );
 /**
  * Echo the "Primary Navigation" menu.
  *
- * The preferred option for creating menus is the Custom Menus feature in WordPress. There is also a fallback to using
- * the Genesis wrapper functions for creating a menu of Pages, or a menu of Categories (maintained only for backwards
- * compatibility).
- *
- * Either output can be filtered via `genesis_do_nav`.
+ * Applies the `genesis_primary_nav` and legacy `genesis_do_nav` filters.
  *
  * @since 1.0.0
  *
+ * @uses genesis_nav_menu() Display a navigation menu.
  * @uses genesis_nav_menu_supported() Checks for support of specific nav menu.
- * @uses genesis_markup()             Contextual markup.
- * @uses genesis_html5()              Check for HTML5 support.
- * @uses genesis_structural_wrap()    Adds optional internal wrap divs.
+ * @uses genesis_a11y() Checks for acessibility support to add a heading to the main navigation.
  */
 function genesis_do_nav() {
 
 	//* Do nothing if menu not supported
-	if ( ! genesis_nav_menu_supported( 'primary' ) )
+	if ( ! genesis_nav_menu_supported( 'primary' ) || ! has_nav_menu( 'primary' ) )
 		return;
 
-	//* If menu is assigned to theme location, output
-	if ( has_nav_menu( 'primary' ) ) {
-
-		$class = 'menu genesis-nav-menu menu-primary';
-		if ( genesis_superfish_enabled() )
-			$class .= ' js-superfish';
-
-		$args = array(
-			'theme_location' => 'primary',
-			'container'      => '',
-			'menu_class'     => $class,
-			'echo'           => 0,
-		);
-
-		$nav = wp_nav_menu( $args );
-
-		//* Do nothing if there is nothing to show
-		if ( ! $nav )
-			return;
-
-		$nav_markup_open = genesis_markup( array(
-			'html5'   => '<nav %s>',
-			'xhtml'   => '<div id="nav">',
-			'context' => 'nav-primary',
-			'echo'    => false,
-		) );
-		$nav_markup_open .= genesis_structural_wrap( 'menu-primary', 'open', 0 );
-
-		$nav_markup_close  = genesis_structural_wrap( 'menu-primary', 'close', 0 );
-		$nav_markup_close .= genesis_html5() ? '</nav>' : '</div>';
-
-		$nav_output = $nav_markup_open . $nav . $nav_markup_close;
-
-		echo apply_filters( 'genesis_do_nav', $nav_output, $nav, $args );
-
+	$class = 'menu genesis-nav-menu menu-primary';
+	if ( genesis_superfish_enabled() ) {
+		$class .= ' js-superfish';
 	}
+
+	if ( genesis_a11y( 'headings' ) ) {
+		printf( '<h2 class="screen-reader-text">%s</h2>', __( 'Main navigation', 'genesis' ) );
+	}
+
+	genesis_nav_menu( array(
+		'theme_location' => 'primary',
+		'menu_class'     => $class,
+	) );
 
 }
 
@@ -103,18 +99,12 @@ add_action( 'genesis_after_header', 'genesis_do_subnav' );
 /**
  * Echo the "Secondary Navigation" menu.
  *
- * The preferred option for creating menus is the Custom Menus feature in WordPress. There is also a fallback to using
- * the Genesis wrapper functions for creating a menu of Pages, or a menu of Categories (maintained only for backwards
- * compatibility).
- *
- * Either output can be filtered via `genesis_do_subnav`.
+ * Applies the `genesis_secondary_nav` and legacy `genesis_do_subnav` filters.
  *
  * @since 1.0.0
  *
+ * @uses genesis_nav_menu() Display a navigation menu.
  * @uses genesis_nav_menu_supported() Checks for support of specific nav menu.
- * @uses genesis_markup()             Contextual markup.
- * @uses genesis_html5()              Check for HTML5 support.
- * @uses genesis_structural_wrap()    Adds optional internal wrap divs.
  */
 function genesis_do_subnav() {
 
@@ -122,42 +112,15 @@ function genesis_do_subnav() {
 	if ( ! genesis_nav_menu_supported( 'secondary' ) )
 		return;
 
-	//* If menu is assigned to theme location, output
-	if ( has_nav_menu( 'secondary' ) ) {
-
-		$class = 'menu genesis-nav-menu menu-secondary';
-		if ( genesis_superfish_enabled() )
-			$class .= ' js-superfish';
-
-		$args = array(
-			'theme_location' => 'secondary',
-			'container'      => '',
-			'menu_class'     => $class,
-			'echo'           => 0,
-		);
-
-		$subnav = wp_nav_menu( $args );
-
-		//* Do nothing if there is nothing to show
-		if ( ! $subnav )
-			return;
-
-		$subnav_markup_open = genesis_markup( array(
-			'html5'   => '<nav %s>',
-			'xhtml'   => '<div id="subnav">',
-			'context' => 'nav-secondary',
-			'echo'    => false,
-		) );
-		$subnav_markup_open .= genesis_structural_wrap( 'menu-secondary', 'open', 0 );
-
-		$subnav_markup_close  = genesis_structural_wrap( 'menu-secondary', 'close', 0 );
-		$subnav_markup_close .= genesis_html5() ? '</nav>' : '</div>';
-
-		$subnav_output = $subnav_markup_open . $subnav . $subnav_markup_close;
-
-		echo apply_filters( 'genesis_do_subnav', $subnav_output, $subnav, $args );
-
+	$class = 'menu genesis-nav-menu menu-secondary';
+	if ( genesis_superfish_enabled() ) {
+		$class .= ' js-superfish';
 	}
+
+	genesis_nav_menu( array(
+		'theme_location' => 'secondary',
+		'menu_class'     => $class,
+	) );
 
 }
 
@@ -167,7 +130,8 @@ add_filter( 'wp_nav_menu_items', 'genesis_nav_right', 10, 2 );
  *
  * @since 1.0.0
  *
- * @uses genesis_get_option() Get navigation extras settings.
+ * @uses genesis_get_option()            Get navigation extras settings.
+ * @uses genesis_first_version_compare() Detect fresh install.
  *
  * @param string   $menu HTML string of list items.
  * @param stdClass $args Menu arguments.
@@ -175,6 +139,11 @@ add_filter( 'wp_nav_menu_items', 'genesis_nav_right', 10, 2 );
  * @return string Amended HTML string of list items.
  */
 function genesis_nav_right( $menu, stdClass $args ) {
+
+	//* Only allow if using 2.0.2 or lower
+	if ( genesis_first_version_compare( '2.0.2', '>' ) ) {
+		return $menu;
+	}
 
 	if ( ! genesis_get_option( 'nav_extras' ) || 'primary' !== $args->theme_location )
 		return $menu;

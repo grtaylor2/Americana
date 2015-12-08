@@ -1,66 +1,90 @@
-/* A dividing horizontal rule ----------- */
+/* # Genesis Framework Admin
+Loaded on all admin pages */
+
+/* # Genesis menu icon font
+----------- */
+
+@font-face {
+	font-family: "genesis-icon";
+	font-weight: normal;
+	font-style: normal;
+
+	src: url("fonts/genesis-icon.eot");
+	src: url("fonts/genesis-icon.eot?#iefix") format("embedded-opentype"),
+		url("fonts/genesis-icon.woff") format("woff"),
+		url("fonts/genesis-icon.ttf") format("truetype"),
+		url("fonts/genesis-icon.svg#genesis-icon") format("svg");
+}
+
+
+/* # A dividing horizontal rule
+----------- */
 
 hr.div {
-	background: #ccc;
 	height: 1px;
-	border: none;
 	margin: 10px 0;
+	border: none;
+	background: #ccc;
 }
 
 
-/* Genesis menu icon ----------- */
+/* # Genesis menu icon
+----------- */
 
 #adminmenu .toplevel_page_genesis .wp-menu-image img {
-	height: 16px;
 	width: 16px;
+	height: 16px;
 }
 
-.admin-color-mp6 #adminmenu .toplevel_page_genesis .wp-menu-image img {
+#adminmenu .toplevel_page_genesis .wp-menu-image img {
 	display: none;
 }
 
-.admin-color-mp6 #adminmenu .toplevel_page_genesis .wp-menu-image:before {
-	content: 'G';
-	font-family: 'Open Sans', sans-serif !important;
-	font-size: 20px;
-	font-weight: 600;
+#adminmenu .toplevel_page_genesis .wp-menu-image:before {
+	font-family: "genesis-icon" !important;
+	content: "\e600";
 }
 
 
-/* Scribe nag ----------- */
+/* # Scribe nag
+----------- */
 
 .scribe-nag {
 	overflow: hidden;
 }
 
 
-/* Genesis upgraded ----------- */
+/* # Genesis upgraded
+----------- */
 
 .whats-new {
-	border-radius: 5px;
-	height: 180px;
 	width: 160px;
+	height: 180px;
+	border-radius: 5px;
 }
 
 
-/* Fix notice placment on our admin pages ----------- */
+/* # Fix notice placment on our admin pages
+----------- */
 
-.wrap div.error,
-.wrap div.updated {
+.genesis-form div.error,
+.genesis-form div.updated,
+.genesis-metaboxes div.error,
+.genesis-metaboxes div.updated {
 	clear: both;
 }
 
 
-/* Genesis metabox styles ----------- */
+/* # Genesis metabox styles
+----------- */
 
 .genesis-metaboxes {
-	-webkit-box-sizing: border-box;
-	-moz-box-sizing: border-box;
 	box-sizing: border-box;
+	max-width: 690px;
 	padding-bottom: 20px;
-	width: 690px;
 }
 
+.genesis-metaboxes h1,
 .genesis-metaboxes h2 {
 	float: left;
 }
@@ -86,7 +110,6 @@ hr.div {
 }
 
 .genesis-metaboxes .inside {
-	overflow: hidden;
 	padding: 0 10px;
 }
 
@@ -107,40 +130,42 @@ hr.div {
 }
 
 
-/* Layout options styles ----------- */
+/* # Layout options styles
+----------- */
 
 .genesis-layout-selector input {
-	display: none;
 	text-align: center;
 }
 
 .genesis-layout-selector .default-layout {
-	display: inline;
+	display: inline-block;
 }
 
 .genesis-layout-selector label.box {
+	border: 3px solid transparent;
 	display: block;
 	float: left;
 	margin: 10px 10px 10px 0;
 	text-align: center;
+	max-width: 85px;
+	max-height: 76px;
 }
 
 .genesis-layout-selector label.box img {
-	border: 3px solid transparent;
-	margin-bottom: 5px;
 	max-width: 85px;
+	pointer-events: none;
 }
 
-.genesis-layout-selector label.box img:hover {
+.genesis-layout-selector label.box:hover {
 	border: 3px solid #ddd;
 }
 
-.genesis-layout-selector label.box.selected img {
+.genesis-layout-selector label.box.selected {
 	border: 3px solid #ccc;
 }
 
 
-/* Inpost layout box */
+/* ## Inpost layout box */
 
 #genesis_inpost_layout_box .inside input#default-layout {
 	margin-left: 5px;
@@ -151,7 +176,7 @@ hr.div {
 }
 
 
-/* Layout selector, no JS ----------- */
+/* ## Layout selector, no JS */
 
 .ie8 .genesis-layout-selector input,
 .no-js .genesis-layout-selector input {
@@ -168,22 +193,23 @@ hr.div {
 }
 
 
-/* Widgets ----------- */
+/* # Widgets
+----------- */
 
 .genesis-widget-column {
 	float: left;
-	width: 250px;
+	width: 49%;
 }
 
 .genesis-widget-column-right {
-	margin-left: 10px;
+	margin-left: 2%;
 }
 
 .genesis-widget-column-box {
-	background: #f1f1f1;
-	border: 1px solid #ddd;
 	margin-top: 10px;
 	padding: 10px 10px 0;
+	border: 1px solid #ddd;
+	background: #f1f1f1;
 }
 
 .genesis-widget-column-box-top {
@@ -191,9 +217,9 @@ hr.div {
 }
 
 .genesis-pagechecklist {
-	list-style-type: none;
 	margin: 0;
 	padding: 0;
+	list-style-type: none;
 }
 
 .genesis-image-size-selector {
@@ -207,3 +233,4 @@ hr.div {
 .widget-control-actions {
 	clear: both;
 }
+

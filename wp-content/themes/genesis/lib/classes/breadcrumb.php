@@ -42,7 +42,7 @@ class Genesis_Breadcrumb {
 		//* Default arguments
 		$this->args = array(
 			'home'                    => __( 'Home', 'genesis' ),
-			'sep'                     => ' / ',
+			'sep'                     => __( ' <span aria-label="breadcrumb separator">/</span> ', 'genesis' ),
 			'list_sep'                => ', ',
 			'prefix'                  => sprintf( '<div %s>', genesis_attr( 'breadcrumb' ) ),
 			'suffix'                  => '</div>',
@@ -73,7 +73,25 @@ class Genesis_Breadcrumb {
 	 */
 	public function get_output( $args = array() ) {
 
-		//* Merge and filter user and default arguments
+		/**
+		 * Filter the Genesis breadcrumb arguments.
+		 *
+		 * @since 1.5.0
+		 *
+		 * @param array $args {
+		 *      Arguments for generating breadcrumbs.
+		 *
+		 *      @type string $home                    Homepage link text.
+		 *      @type string $sep                     Separator.
+		 *      @type string $list_set                List format separator.
+		 *      @type string $prefix                  Prefix before breadcrumb list.
+		 *      @type string $suffix                  Suffix after breadcrumb list.
+		 *      @type bool   $heirarchial_attachments Whether attachments are hierarchical.
+		 *      @type bool   $heirarchial_categories  Whether categories are hierarchical.
+		 *      @type array $labels                   Labels including the following keys: 'prefix', 'author', 'category',
+		 *                                            'tag', 'date', 'search', 'tax', 'post_type', '404'.
+		 * }
+		 */
 		$this->args = apply_filters( 'genesis_breadcrumb_args', wp_parse_args( $args, $this->args ) );
 
 		return $this->args['prefix'] . $this->args['labels']['prefix'] . $this->build_crumbs() . $this->args['suffix'];
@@ -117,6 +135,14 @@ class Genesis_Breadcrumb {
 		elseif ( is_singular() )
 			$crumbs[] = $this->get_single_crumb();
 
+		/**
+		 * Filter the Genesis breadcrumbs.
+		 *
+		 * @since 1.5.0
+		 *
+		 * @param string $crumbs HTML markup for the breadcrumbs.
+		 * @param array  $args   Arguments used to generate the breadcrumbs. Documented in Genesis_Breadcrumbs::get_output().
+		 */
 		$crumbs = apply_filters( 'genesis_build_crumbs', $crumbs, $this->args );
 
 		return join( $this->args['sep'], array_filter( array_unique( $crumbs ) ) );
@@ -149,6 +175,14 @@ class Genesis_Breadcrumb {
 		elseif ( is_post_type_archive() )
 			$crumb = $this->get_post_type_crumb();
 
+		/**
+		 * Filter the Genesis archive breadcrumb.
+		 *
+		 * @since 1.5.0
+		 *
+		 * @param string $crumb HTML markup for the archive breadcrumb.
+		 * @param array  $args  Arguments used to generate the breadcrumbs. Documented in Genesis_Breadcrumbs::get_output().
+		 */
 		return apply_filters( 'genesis_archive_crumb', $crumb, $this->args );
 
 	}
@@ -170,6 +204,14 @@ class Genesis_Breadcrumb {
 			$crumb = $this->get_cpt_crumb();
 		}
 
+		/**
+		 * Filter the Genesis single breadcrumb.
+		 *
+		 * @since 1.5.0
+		 *
+		 * @param string $crumb HTML markup for the single breadcrumb.
+		 * @param array  $args  Arguments used to generate the breadcrumbs. Documented in Genesis_Breadcrumbs::get_output().
+		 */
 		return apply_filters( 'genesis_single_crumb', $crumb, $this->args );
 
 	}
@@ -186,8 +228,16 @@ class Genesis_Breadcrumb {
 	protected function get_home_crumb() {
 
 		$url   = $this->page_shown_on_front() ? get_permalink( get_option( 'page_on_front' ) ) : trailingslashit( home_url() );
-		$crumb = ( is_home() && is_front_page() ) ? $this->args['home'] : $this->get_breadcrumb_link( $url, sprintf( __( 'View %s', 'genesis' ), $this->args['home'] ), $this->args['home'] );
+		$crumb = ( is_home() && is_front_page() ) ? $this->args['home'] : $this->get_breadcrumb_link( $url, '', $this->args['home'] );
 
+		/**
+		 * Filter the Genesis home breadcrumb.
+		 *
+		 * @since 1.5.0
+		 *
+		 * @param string $crumb HTML markup for the home breadcrumb.
+		 * @param array  $args  Arguments used to generate the breadcrumbs. Documented in Genesis_Breadcrumbs::get_output().
+		 */
 		return apply_filters( 'genesis_home_crumb', $crumb, $this->args );
 
 	}
@@ -208,6 +258,14 @@ class Genesis_Breadcrumb {
 		if ( $this->page_shown_on_front() )
 			$crumb = get_the_title( get_option( 'page_for_posts' ) );
 
+		/**
+		 * Filter the Genesis blog posts breadcrumb.
+		 *
+		 * @since 1.5.0
+		 *
+		 * @param string $crumb HTML markup for the blog posts breadcrumb.
+		 * @param array  $args  Arguments used to generate the breadcrumbs. Documented in Genesis_Breadcrumbs::get_output().
+		 */
 		return apply_filters( 'genesis_blog_crumb', $crumb, $this->args );
 
 	}
@@ -223,6 +281,14 @@ class Genesis_Breadcrumb {
 
 		$crumb = $this->args['labels']['search'] . '"' . esc_html( apply_filters( 'the_search_query', get_search_query() ) ) . '"';
 
+		/**
+		 * Filter the Search page breadcrumb.
+		 *
+		 * @since 1.5.0
+		 *
+		 * @param string $crumb HTML markup for the search page breadcrumb.
+		 * @param array  $args  Arguments used to generate the breadcrumbs. Documented in Genesis_Breadcrumbs::get_output().
+		 */
 		return apply_filters( 'genesis_search_crumb', $crumb, $this->args );
 
 	}
@@ -238,6 +304,14 @@ class Genesis_Breadcrumb {
 
 		$crumb = $this->args['labels']['404'];
 
+		/**
+		 * Filter the 404 page breadcrumb.
+		 *
+		 * @since 1.5.0
+		 *
+		 * @param string $crumb HTML markup for the 404 page breadcrumb.
+		 * @param array  $args  Arguments used to generate the breadcrumbs. Documented in Genesis_Breadcrumbs::get_output().
+		 */
 		return apply_filters( 'genesis_404_crumb', $crumb, $this->args );
 
 	}
@@ -248,6 +322,7 @@ class Genesis_Breadcrumb {
 	 * @since 1.5.0
 	 *
 	 * @global WP_Query $wp_query Query object.
+	 *
 	 * @return string HTML markup
 	 */
 	protected function get_page_crumb() {
@@ -279,7 +354,7 @@ class Genesis_Breadcrumb {
 						$crumbs,
 						$this->get_breadcrumb_link(
 							get_permalink( $ancestor ),
-							sprintf( __( 'View %s', 'genesis' ), get_the_title( $ancestor ) ),
+							'',
 							get_the_title( $ancestor )
 						)
 					);
@@ -292,6 +367,14 @@ class Genesis_Breadcrumb {
 			}
 		}
 
+		/**
+		 * Filter the content page breadcrumb.
+		 *
+		 * @since 1.5.0
+		 *
+		 * @param string $crumb HTML markup for the content page breadcrumb.
+		 * @param array  $args  Arguments used to generate the breadcrumbs. Documented in Genesis_Breadcrumbs::get_output().
+		 */
 		return apply_filters( 'genesis_page_crumb', $crumb, $this->args );
 
 	}
@@ -301,13 +384,11 @@ class Genesis_Breadcrumb {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @global WP_Post post Post object.
-	 *
 	 * @return string HTML markup.
 	 */
 	protected function get_attachment_crumb() {
 
-		global $post;
+		$post = get_post();
 
 		$crumb = '';
 		if ( $this->args['heirarchial_attachments'] ) {
@@ -315,7 +396,7 @@ class Genesis_Breadcrumb {
 			$attachment_parent = get_post( $post->post_parent );
 			$crumb = $this->get_breadcrumb_link(
 				get_permalink( $post->post_parent ),
-				sprintf( __( 'View %s', 'genesis' ), $attachment_parent->post_title ),
+				'',
 				$attachment_parent->post_title,
 				$this->args['sep']
 			);
@@ -331,15 +412,11 @@ class Genesis_Breadcrumb {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @global WP_Post post Post object.
-	 *
 	 * @return string HTML markup.
 	 */
 	protected function get_post_crumb() {
 
-		global $post;
-
-		$categories = get_the_category( $post->ID );
+		$categories = get_the_category();
 
 		if ( 1 === count( $categories ) ) {
 			//* If in single category, show it, and any parent categories
@@ -351,14 +428,14 @@ class Genesis_Breadcrumb {
 				foreach ( $categories as $category ) {
 					$crumbs[] = $this->get_breadcrumb_link(
 						get_category_link( $category->term_id ),
-						sprintf( __( 'View all posts in %s', 'genesis' ), $category->name ),
+						'',
 						$category->name
 					);
 				}
 				$crumb = join( $this->args['list_sep'], $crumbs ) . $this->args['sep'];
 			} else {
 				//* Show parent categories - see if one is marked as primary and try to use that
-				$primary_category_id = get_post_meta( $post->ID, '_category_permalink', true ); //* Support for sCategory Permalink plugin
+				$primary_category_id = get_post_meta( get_the_ID(), '_category_permalink', true ); //* Support for sCategory Permalink plugin
 				if ( $primary_category_id ) {
 					$crumb = $this->get_term_parents( $primary_category_id, 'category', true ) . $this->args['sep'];
 				} else {
@@ -384,10 +461,15 @@ class Genesis_Breadcrumb {
 		$post_type = get_query_var( 'post_type' );
 		$post_type_object = get_post_type_object( $post_type );
 
-		if ( $cpt_archive_link = get_post_type_archive_link( $post_type ) )
-			$crumb = $this->get_breadcrumb_link( $cpt_archive_link, sprintf( __( 'View all %s', 'genesis' ), $post_type_object->labels->name ), $post_type_object->labels->name );
-		else
+		if ( $cpt_archive_link = get_post_type_archive_link( $post_type ) ) {
+			$crumb = $this->get_breadcrumb_link(
+				$cpt_archive_link,
+				'',
+				$post_type_object->labels->name
+			);
+		} else {
 			$crumb = $post_type_object->labels->name;
+		}
 
 		$crumb .= $this->args['sep'] . single_post_title( '', false );
 
@@ -405,6 +487,15 @@ class Genesis_Breadcrumb {
 	protected function get_category_crumb() {
 
 		$crumb = $this->args['labels']['category'] . $this->get_term_parents( get_query_var( 'cat' ), 'category' );
+
+		/**
+		 * Filter the category archive breadcrumb.
+		 *
+		 * @since 1.9.0
+		 *
+		 * @param string $crumb HTML markup for the category archive crumb.
+		 * @param array  $args  Arguments used to generate the breadcrumbs. Documented in Genesis_Breadcrumbs::get_output().
+		 */
 		return apply_filters( 'genesis_category_crumb', $crumb, $this->args );
 
 	}
@@ -419,6 +510,15 @@ class Genesis_Breadcrumb {
 	protected function get_tag_crumb() {
 
 		$crumb = $this->args['labels']['tag'] . single_term_title( '', false );
+
+		/**
+		 * Filter the tag archive breadcrumb.
+		 *
+		 * @since 1.9.0
+		 *
+		 * @param string $crumb HTML markup for the tag archive crumb.
+		 * @param array  $args  Arguments used to generate the breadcrumbs. Documented in Genesis_Breadcrumbs::get_output().
+		 */
 		return apply_filters( 'genesis_tag_crumb', $crumb, $this->args );
 
 	}
@@ -429,6 +529,7 @@ class Genesis_Breadcrumb {
 	 * @since 1.9.0
 	 *
 	 * @global WP_Query $wp_query Query object.
+	 *
 	 * @return string HTML markup
 	 */
 	protected function get_tax_crumb() {
@@ -437,6 +538,15 @@ class Genesis_Breadcrumb {
 
 		$term  = $wp_query->get_queried_object();
 		$crumb = $this->args['labels']['tax'] . $this->get_term_parents( $term->term_id, $term->taxonomy );
+
+		/**
+		 * Filter the taxonomy archive breadcrumb.
+		 *
+		 * @since 1.9.0
+		 *
+		 * @param string $crumb HTML markup for the taxonomy archive breadcrumb.
+		 * @param array  $args  Arguments used to generate the breadcrumbs. Documented in Genesis_Breadcrumbs::get_output().
+		 */
 		return apply_filters( 'genesis_tax_crumb', $crumb, $this->args );
 
 	}
@@ -453,6 +563,15 @@ class Genesis_Breadcrumb {
 		$year = get_query_var( 'm' ) ? get_query_var( 'm' ) : get_query_var( 'year' );
 
 		$crumb = $this->args['labels']['date'] . $year;
+
+		/**
+		 * Filter the year archive breadcrumb.
+		 *
+		 * @since 1.9.0
+		 *
+		 * @param string $crumb HTML markup for the year archive breadcrumb.
+		 * @param array  $args  Arguments used to generate the breadcrumbs. Documented in Genesis_Breadcrumbs::get_output().
+		 */
 		return apply_filters( 'genesis_year_crumb', $crumb, $this->args );
 
 	}
@@ -468,12 +587,22 @@ class Genesis_Breadcrumb {
 
 		$year = get_query_var( 'm' ) ? mb_substr( get_query_var( 'm' ), 0, 4 ) : get_query_var( 'year' );
 
-		$crumb = $this->get_breadcrumb_link( get_year_link( $year ),
-			sprintf( __( 'View archives for %s', 'genesis' ), $year ),
+		$crumb = $this->get_breadcrumb_link(
+			get_year_link( $year ),
+			'',
 			$year,
 			$this->args['sep']
 		);
 		$crumb .= $this->args['labels']['date'] . single_month_title( ' ', false );
+
+		/**
+		 * Filter the month archive breadcrumb.
+		 *
+		 * @since 1.9.0
+		 *
+		 * @param string $crumb HTML markup for the month archive breadcrumb.
+		 * @param array  $args  Arguments used to generate the breadcrumbs. Documented in Genesis_Breadcrumbs::get_output().
+		 */
 		return apply_filters( 'genesis_month_crumb', $crumb, $this->args );
 
 	}
@@ -484,7 +613,9 @@ class Genesis_Breadcrumb {
 	 * @since 1.9.0
 	 *
 	 * @global mixed $wp_locale The locale object, used for getting the
-	 * auto-translated name of the month for month or day archives
+	 *                          auto-translated name of the month for month or
+	 *                          day archives.
+	 *
 	 * @return string HTML markup
 	 */
 	protected function get_day_crumb() {
@@ -497,17 +628,26 @@ class Genesis_Breadcrumb {
 
 		$crumb  = $this->get_breadcrumb_link(
 			get_year_link( $year ),
-			sprintf( __( 'View archives for %s', 'genesis' ), $year ),
+			'',
 			$year,
 			$this->args['sep']
 		);
 		$crumb .= $this->get_breadcrumb_link(
 			get_month_link( $year, $month ),
-			sprintf( __( 'View archives for %s %s', 'genesis' ), $wp_locale->get_month( $month ), $year ),
+			'',
 			$wp_locale->get_month( $month ),
 			$this->args['sep']
 		);
 		$crumb .= $this->args['labels']['date'] . $day . date( 'S', mktime( 0, 0, 0, 1, $day ) );
+
+		/**
+		 * Filter the day archive breadcrumb.
+		 *
+		 * @since 1.9.0
+		 *
+		 * @param string $crumb HTML markup for the day archive breadcrumb.
+		 * @param array  $args  Arguments used to generate the breadcrumbs. Documented in Genesis_Breadcrumbs::get_output().
+		 */
 		return apply_filters( 'genesis_day_crumb', $crumb, $this->args );
 
 	}
@@ -518,6 +658,7 @@ class Genesis_Breadcrumb {
 	 * @since 1.9.0
 	 *
 	 * @global WP_Query $wp_query Query object.
+	 *
 	 * @return string HTML markup
 	 */
 	protected function get_author_crumb() {
@@ -525,6 +666,15 @@ class Genesis_Breadcrumb {
 		global $wp_query;
 
 		$crumb = $this->args['labels']['author'] . esc_html( $wp_query->queried_object->display_name );
+
+		/**
+		 * Filter the author archive breadcrumb.
+		 *
+		 * @since 1.9.0
+		 *
+		 * @param string $crumb HTML markup for the author archive crumb.
+		 * @param array  $args  Arguments used to generate the breadcrumbs. Documented in Genesis_Breadcrumbs::get_output().
+		 */
 		return apply_filters( 'genesis_author_crumb', $crumb, $this->args );
 
 	}
@@ -539,6 +689,15 @@ class Genesis_Breadcrumb {
 	protected function get_post_type_crumb() {
 
 		$crumb = $this->args['labels']['post_type'] . esc_html( post_type_archive_title( '', false ) );
+
+		/**
+		 * Filter the post type archive breadcrumb.
+		 *
+		 * @since 1.9.0
+		 *
+		 * @param string $crumb HTML markup for the post type archive breadcrumb.
+		 * @param array  $args  Arguments used to generate the breadcrumbs. Documented in Genesis_Breadcrumbs::get_output().
+		 */
 		return apply_filters( 'genesis_post_type_crumb', $crumb, $this->args );
 
 	}
@@ -556,7 +715,7 @@ class Genesis_Breadcrumb {
 	 */
 	protected function get_term_parents( $parent_id, $taxonomy, $link = false, array $visited = array() ) {
 
-		$parent = &get_term( (int)$parent_id, $taxonomy );
+		$parent = get_term( (int)$parent_id, $taxonomy );
 
 		if ( is_wp_error( $parent ) )
 			return array();
@@ -567,7 +726,11 @@ class Genesis_Breadcrumb {
 		}
 
 		if ( $link && !is_wp_error( get_term_link( get_term( $parent->term_id, $taxonomy ), $taxonomy ) ) ) {
-			$chain[] = $this->get_breadcrumb_link( get_term_link( get_term( $parent->term_id, $taxonomy ), $taxonomy ), sprintf( __( 'View all items in %s', 'genesis' ), $parent->name ), $parent->name );
+			$chain[] = $this->get_breadcrumb_link(
+				get_term_link( get_term( $parent->term_id, $taxonomy ), $taxonomy ),
+				'',
+				$parent->name
+			);
 		} else {
 			$chain[] = $parent->name;
 		}
@@ -581,20 +744,43 @@ class Genesis_Breadcrumb {
 	 *
 	 * @since 1.5.0
 	 *
-	 * @param string $url URL for href attribute
-	 * @param string $title title attribute
-	 * @param string $content linked content
-	 * @param string $sep Separator
+	 * @param string $url     URL for href attribute.
+	 * @param string $title   Title attribute.
+	 * @param string $content Linked content.
+	 * @param string $sep     Separator.
+	 *
 	 * @return string HTML markup for anchor link and optional separator.
 	 */
 	protected function get_breadcrumb_link( $url, $title, $content, $sep = false ) {
 
-		$link = sprintf( '<a href="%s" title="%s">%s</a>', esc_attr( $url ), esc_attr( $title ), esc_html( $content ) );
+		//* Empty title, for backward compatibility
+		$title = '';
 
+		$itemprop_item = genesis_html5() ? ' itemprop="item"' : '';
+		$itemprop_name = genesis_html5() ? ' itemprop="name"' : '';
+
+		$link = sprintf( '<a href="%s"%s><span%s>%s</span></a>', esc_attr( $url ), $itemprop_item, $itemprop_name, $content );
+
+		/**
+		 * Filter the anchor link for a single breadcrumb.
+		 *
+		 * @since 1.5.0
+		 *
+		 * @param string $link    HTML markup for anchor link, before optional separator is added.
+		 * @param string $url     URL for href attribute.
+		 * @param string $title   Title attribute.
+		 * @param string $content Link content.
+		 * @param array  $args    Arguments used to generate the breadcrumbs. Documented in Genesis_Breadcrumbs::get_output().
+		 */
 		$link = apply_filters( 'genesis_breadcrumb_link', $link, $url, $title, $content, $this->args );
 
-		if ( $sep )
+		if ( genesis_html5() ) {
+			$link = sprintf( '<span %s>', genesis_attr( 'breadcrumb-link-wrap' ) ) . $link . '</span>';
+		}
+
+		if ( $sep ) {
 			$link .= $sep;
+		}
 
 		return $link;
 

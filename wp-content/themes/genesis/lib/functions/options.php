@@ -32,9 +32,19 @@
  */
 function genesis_get_option( $key, $setting = null, $use_cache = true ) {
 
-
 	//* The default is set here, so it doesn't have to be repeated in the function arguments for genesis_option() too.
 	$setting = $setting ? $setting : GENESIS_SETTINGS_FIELD;
+
+	//* Allow child theme to short-circuit this function
+	$pre = apply_filters( "genesis_pre_get_option_{$key}", null, $setting );
+	if ( null !== $pre ) {
+		return $pre;
+	}
+
+	//* Bypass cache if viewing site in customizer
+	if ( genesis_is_customizer() ) {
+		$use_cache = false;
+	}
 
 	//* If we need to bypass the cache
 	if ( ! $use_cache ) {
@@ -49,11 +59,6 @@ function genesis_get_option( $key, $setting = null, $use_cache = true ) {
 	//* Setup caches
 	static $settings_cache = array();
 	static $options_cache  = array();
-
-	//* Allow child theme to short-circuit this function
-	$pre = apply_filters( 'genesis_pre_get_option_' . $key, null, $setting );
-	if ( null !== $pre )
-		return $pre;
 
 	//* Check options cache
 	if ( isset( $options_cache[$setting][$key] ) )
@@ -197,23 +202,29 @@ function genesis_custom_field( $field, $output_pattern = '%s' ) {
 /**
  * Return custom field post meta data.
  *
- * Return only the first value of custom field. Return false if field is blank or not set.
+ * Return only the first value of custom field. Return empty string if field is blank or not set.
  *
  * @since 0.1.3
  *
  * @param string $field Custom field key.
+ * @param int $post_id Optional. Post ID to use for Post Meta lookup, defaults to get_the_ID()
  *
- * @return string|boolean Return value or false on failure.
+ * @return string|boolean Return value or empty string on failure.
  */
-function genesis_get_custom_field( $field ) {
+function genesis_get_custom_field( $field, $post_id = null ) {
 
-	if ( null === get_the_ID() )
+	//* Use get_the_ID() if no $post_id is specified
+	$post_id = ( null !== $post_id ? $post_id : get_the_ID() );
+
+	if ( null === $post_id ) {
 		return '';
+	}
 
-	$custom_field = get_post_meta( get_the_ID(), $field, true );
+	$custom_field = get_post_meta( $post_id, $field, true );
 
-	if ( ! $custom_field )
+	if ( ! $custom_field ) {
 		return '';
+	}
 
 	//* Return custom field, slashes stripped, sanitized if string
 	return is_array( $custom_field ) ? stripslashes_deep( $custom_field ) : stripslashes( wp_kses_decode_entities( $custom_field ) );
@@ -243,6 +254,10 @@ function genesis_get_custom_field( $field ) {
  */
 function genesis_save_custom_fields( array $data, $nonce_action, $nonce_name, $post, $deprecated = null ) {
 
+	if ( ! empty( $deprecated ) ) {
+		_deprecated_argument( __FUNCTION__, '2.0.0' );
+	}
+
 	//* Verify the nonce
 	if ( ! isset( $_POST[ $nonce_name ] ) || ! wp_verify_nonce( $_POST[ $nonce_name ], $nonce_action ) )
 		return;
@@ -262,7 +277,7 @@ function genesis_save_custom_fields( array $data, $nonce_action, $nonce_name, $p
 		$post = get_post( $post );
 
 	//* Don't save if WP is creating a revision (same as DOING_AUTOSAVE?)
-	if ( 'revision' === $post->post_type )
+	if ( 'revision' === get_post_type( $post ) )
 		return;
 
 	//* Check that the user is allowed to edit the post
@@ -280,88 +295,29 @@ function genesis_save_custom_fields( array $data, $nonce_action, $nonce_name, $p
 
 }
 
-add_filter( 'get_term', 'genesis_get_term_filter', 10, 2 );
-/**
- * Merge term meta data into options table.
- *
- * Genesis is forced to create its own term-meta data structure in the options table, since it is not support in core WP.
- *
- * Applies `genesis_term_meta_defaults`, `genesis_term_meta_{field}` and `genesis_term_meta` filters.
- *
- * @since 1.2.0
- *
- * @param object $term     Database row object.
- * @param string $taxonomy Taxonomy name that $term is part of.
- *
- * @return object $term Database row object.
- */
-function genesis_get_term_filter( $term, $taxonomy ) {
-
-	//* Do nothing, if $term is not object
-	if ( ! is_object( $term ) )
-		return $term;
-
-	$db = get_option( 'genesis-term-meta' );
-	$term_meta = isset( $db[$term->term_id] ) ? $db[$term->term_id] : array();
-
-	$term->meta = wp_parse_args( $term_meta, apply_filters( 'genesis_term_meta_defaults', array(
-		'headline'            => '',
-		'intro_text'          => '',
-		'display_title'       => 0, //* vestigial
-		'display_description' => 0, //* vestigial
-		'doctitle'            => '',
-		'description'         => '',
-		'keywords'            => '',
-		'layout'              => '',
-		'noindex'             => 0,
-		'nofollow'            => 0,
-		'noarchive'           => 0,
-	) ) );
-
-	//* Sanitize term meta
-	foreach ( $term->meta as $field => $value )
-		$term->meta[$field] = apply_filters( 'genesis_term_meta_' . $field, stripslashes( wp_kses_decode_entities( $value ) ), $term, $taxonomy );
-
-	$term->meta = apply_filters( 'genesis_term_meta', $term->meta, $term, $taxonomy );
-
-	return $term;
-
-}
-
-add_filter( 'get_terms', 'genesis_get_terms_filter', 10, 2 );
-/**
- * Add Genesis term-meta data to functions that return multiple terms.
- *
- * @since 2.0.0
- *
- * @param array  $terms    Database row objects.
- * @param string $taxonomy Taxonomy name that $terms are part of.
- *
- * @return array $terms Database row objects.
- */
-function genesis_get_terms_filter( array $terms, $taxonomy ) {
-
-	foreach( $terms as $term )
-		$term = genesis_get_term_filter( $term, $taxonomy );
-
-	return $terms;
-
-}
-
 /**
  * Takes an array of new settings, merges them with the old settings, and pushes them into the database.
  *
- * @since 1.7.0
+ * @since 2.1.0
  *
  * @uses GENESIS_SETTINGS_FIELD
- *
- * @access private
  *
  * @param string|array $new     New settings. Can be a string, or an array.
  * @param string       $setting Optional. Settings field name. Default is GENESIS_SETTINGS_FIELD.
  */
-function _genesis_update_settings( $new = '', $setting = GENESIS_SETTINGS_FIELD ) {
+function genesis_update_settings( $new = '', $setting = GENESIS_SETTINGS_FIELD ) {
 
-	update_option( $setting, wp_parse_args( $new, get_option( $setting ) ) );
+	$old = get_option( $setting );
+
+	$settings = wp_parse_args( $new, $old );
+
+	//* Allow settings to be deleted
+	foreach ( $settings as $key => $value ) {
+		if ( 'unset' == $value ) {
+			unset( $settings[ $key ] );
+		}
+	}
+
+	return update_option( $setting, $settings );
 
 }

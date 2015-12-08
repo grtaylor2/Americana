@@ -63,63 +63,29 @@ class Genesis_Admin_Upgraded extends Genesis_Admin_Basic {
 		<div class="about-text"><?php printf( __( 'Congratulations! You\'re now running Genesis %s.', 'genesis' ), PARENT_THEME_BRANCH ); ?></div>
 
 		<div class="changelog">
-			<h3><?php _e( 'What&#8217;s New', 'genesis' ); ?></h3>
+			<h2><?php _e( 'What&#8217;s New', 'genesis' ); ?></h2>
 			<div class="feature-section">
 
-				<h4><?php _e( 'HTML5 Markup', 'genesis' ); ?></h4>
-				<p><?php _e( 'Genesis has always been on the cutting edge of web technology, and Genesis 2.0 continues in that excellent tradition. With a single line of code in a child theme, Genesis will now output HTML5 markup in place of the old XHTML tags. Also, every theme we build in the future will be developed on HTML5.', 'genesis' ); ?></p>
+				<h3><?php _e( 'Accessibility', 'genesis' ); ?></h3>
+				<p><?php _e( 'Child themes now have the ability to turn on accessibility features like special text for screen readers, accessible search forms, consistent page and section headings, skip links, and an accessible drop-down navigation menu.', 'genesis' ); ?></p>
 
-				<h4><?php _e( 'Microdata', 'genesis' ); ?></h4>
-				<p><?php printf( __( 'If you\'re using a theme with HTML5 enabled, Genesis will also output your markup using microdata.. Not sure what that is? We don\'t blame you. Take a look at <a href="%s" target="_blank">this explanation</a>. Still confused? Don\'t worry. That\'s why you\'re using a framework. We did all the research and modified the markup to serve search engines the Microdata they\'re looking for, so you don\'t have to. It\'s good to be a Genesis user.', 'genesis' ), 'http://html5doctor.com/microdata/' ); ?></p>
+				<h3><?php _e( 'Schema.org Microdata Improvements', 'genesis' ); ?></h3>
+				<p><?php _e( 'Genesis continues to improve its implementation of Schema.org microdata in our markup, now including breadcrumb microdata.', 'genesis' ); ?></p>
 
-				<h4><?php _e( 'A Brand New Design', 'genesis' ); ?></h4>
-				<p><?php _e( 'Genesis is sporting a fresh new look. And we\'ve taken advantage of the new HTML5 markup, as well as some snazzy CSS3. We think you\'re gonna love this.', 'genesis' ); ?></p>
-
-				<h4><?php _e( 'Removing Features', 'genesis' ); ?></h4>
-				<p><?php _e( 'We want to keep Genesis as lightweight as possible for you, nobody wants to use bloated software. So we\'ve removed the Latest Tweets widget, eNews widget, the "post templates" feature, and the "fancy dropdowns" setting. But fear not! If you want those features back, click below to install the handy plugins we created for you.', 'genesis' ); ?></p>
-
-				<p>
-					<ul>
-						<li><?php echo genesis_plugin_install_link( 'genesis-latest-tweets', __( 'Genesis Latest Tweets Widget', 'genesis' ) ); ?></li>
-						<li><?php echo genesis_plugin_install_link( 'genesis-enews-extended', __( 'Genesis eNews Extended', 'genesis' ) ); ?></li>
-						<li><?php echo genesis_plugin_install_link( 'single-post-template', __( 'Single Post Template', 'genesis' ) ); ?></li>
-						<li><?php echo genesis_plugin_install_link( 'genesis-fancy-dropdowns', __( 'Fancy Dropdowns', 'genesis' ) ); ?></li>
-					</ul>
-				</p>
-
-				<h4><?php _e( 'Boring, but important', 'genesis' ); ?></h4>
-				<p><?php _e( 'We\'re always improving. Call it a sickness, but we like to make things work really, really well. Here\'s a list of the technical changes in this latest release.', 'genesis' ); ?></p>
-
-				<p>
-					<ul>
-						<li><?php _e( 'Better named loop hooks for HTML5.', 'genesis' ); ?></li>
-						<li><?php _e( 'Network Upgrade now upgrades the Genesis database for all sites in a network when running WordPress in multisite mode.', 'genesis' ); ?></li>
-						<li><?php _e( 'Widget classes are now coded in PHP5 format.', 'genesis' ); ?></li>
-						<li><?php _e( 'Admin CSS and Javascript are now minified.', 'genesis' ); ?></li>
-						<li><?php _e( 'Inline HTML comments have been removed to reduce page size.', 'genesis' ); ?></li>
-						<li><?php _e( 'The Scripts option now has its own metabox when editing an entry.', 'genesis' ); ?></li>
-						<li><?php _e( 'Custom Post Type archive pages now have a settings page so you can control the output.', 'genesis' ); ?></li>
-						<li><?php _e( 'Genesis tracks displayed entry IDs so you can exclude entries from showing twice on a page.', 'genesis' ); ?></li>
-						<li><?php _e( 'Entries without titles now display a permalink after the post content.', 'genesis' ); ?></li>
-					</ul>
-				<p>
+				<h3><?php _e( 'WordPress Feature Compatibility', 'genesis' ); ?></h3>
+				<p><?php _e( 'WordPress recently included support for generated title tags, as well as adding support for uploading a custom site icon, and now Genesis is compatible with both new features.', 'genesis' ); ?></p>
 
 				</div>
 		</div>
 
 		<div class="project-leads">
 
-			<h3><?php _e( 'Project Leads', 'genesis' ); ?></h3>
+			<h2><?php _e( 'Project Leads', 'genesis' ); ?></h2>
 
 			<ul class="wp-people-group " id="wp-people-group-project-leaders">
 			<li class="wp-person">
 				<a href="http://twitter.com/nathanrice"><img src="//0.gravatar.com/avatar/fdbd4b13e3bcccb8b48cc18f846efb7f?s=120" class="gravatar" alt="Nathan Rice" /></a>
 				<a class="web" href="http://twitter.com/nathanrice">Nathan Rice</a>
-				<span class="title"><?php _e( 'Lead Developer', 'genesis' ); ?></span>
-			</li>
-			<li class="wp-person">
-				<a href="http://twitter.com/sillygrampy"><img src="//0.gravatar.com/avatar/7b8ff059b9a4504dfbaebd4dd190466e?s=120" class="gravatar" alt="Ron Rennick" /></a>
-				<a class="web" href="http://twitter.com/sillygrampy">Ron Rennick</a>
 				<span class="title"><?php _e( 'Lead Developer', 'genesis' ); ?></span>
 			</li>
 			<li class="wp-person">
@@ -133,7 +99,7 @@ class Genesis_Admin_Upgraded extends Genesis_Admin_Basic {
 
 		<div class="contributors">
 
-			<h3><?php _e( 'Contributors', 'genesis' ); ?></h3>
+			<h2><?php _e( 'Contributors', 'genesis' ); ?></h2>
 
 			<ul class="wp-people-group" id="wp-people-group-contributing-developers">
 			<?php
@@ -154,7 +120,11 @@ class Genesis_Admin_Upgraded extends Genesis_Admin_Basic {
 
 		<div class="return-to-dashboard">
 			<p><a href="<?php echo esc_url( menu_page_url( 'genesis', 0 ) ); ?>"><?php _e( 'Go to Theme Settings &rarr;', 'genesis' ); ?></a></p>
-			<p><a href="<?php echo esc_url( menu_page_url( 'seo-settings', 0 ) ); ?>"><?php _e( 'Go to SEO Settings &rarr;', 'genesis' ); ?></a></p>
+			<?php
+			if ( ! genesis_seo_disabled() ):
+				?><p><a href="<?php echo esc_url( menu_page_url( 'seo-settings', 0 ) ); ?>"><?php _e( 'Go to SEO Settings &rarr;', 'genesis' ); ?></a></p><?php
+			endif; ?>
+
 		</div>
 
 		</div>

@@ -61,31 +61,30 @@ function genesis_html5_doctype() {
 
 	?><!DOCTYPE html>
 <html <?php language_attributes( 'html' ); ?>>
-<head>
+<head <?php echo genesis_attr( 'head' ); ?>>
 <meta charset="<?php bloginfo( 'charset' ); ?>" />
 <?php
 
 }
 
-add_filter( 'wp_title', 'genesis_doctitle_wrap', 20 );
+add_action( 'genesis_title', 'genesis_do_title' );
 /**
- * Wraps the page title in a `title` element.
+ * Output the title, wrapped in title tags.
  *
- * Only applies, if not currently in admin, or for a feed.
- *
- * @since 1.3.0
- *
- * @param string $title Page title.
- *
- * @return string Plain text or HTML markup
+ * @since 2.1.0
  */
-function genesis_doctitle_wrap( $title ) {
+function genesis_do_title() {
 
-	return is_feed() || is_admin() ? $title : sprintf( "<title>%s</title>\n", $title );
+	if ( get_theme_support( 'title-tag' ) ) {
+		return;
+	}
+
+	echo '<title>';
+	wp_title( '' );
+	echo '</title>';
 
 }
 
-add_action( 'genesis_title', 'wp_title' );
 add_filter( 'wp_title', 'genesis_default_title', 10, 3 );
 /**
  * Return filtered post title.
@@ -111,15 +110,17 @@ add_filter( 'wp_title', 'genesis_default_title', 10, 3 );
 function genesis_default_title( $title, $sep, $seplocation ) {
 
 	global $wp_query;
+	$post_id = null;
 
-	if ( is_feed() )
-		return trim( $title );
+	if ( is_feed() ) {
+		return $title;
+	}
 
 	$sep = genesis_get_seo_option( 'doctitle_sep' ) ? genesis_get_seo_option( 'doctitle_sep' ) : '–';
 	$seplocation = genesis_get_seo_option( 'doctitle_seplocation' ) ? genesis_get_seo_option( 'doctitle_seplocation' ) : 'right';
 
-	//* If viewing the home page
-	if ( is_front_page() ) {
+	//* If viewing the root page
+	if ( genesis_is_root_page() ) {
 		//* Determine the doctitle
 		$title = genesis_get_seo_option( 'home_doctitle' ) ? genesis_get_seo_option( 'home_doctitle' ) : get_bloginfo( 'name' );
 
@@ -127,26 +128,31 @@ function genesis_default_title( $title, $sep, $seplocation ) {
 		$title = genesis_get_seo_option( 'append_description_home' ) ? $title . " $sep " . get_bloginfo( 'description' ) : $title;
 	}
 
+	//* When the page is set as the Posts Page in WordPress core, use the $post_id of the page when loading SEO values
+	if ( is_home() && get_option( 'page_for_posts' ) && get_queried_object_id() ) {
+		$post_id = get_option( 'page_for_posts' );
+	}
+
 	//* if viewing a post / page / attachment
-	if ( is_singular() ) {
+	if ( is_singular() || null !== $post_id ) {
 		//* The User Defined Title (Genesis)
-		if ( genesis_get_custom_field( '_genesis_title' ) )
-			$title = genesis_get_custom_field( '_genesis_title' );
+		if ( genesis_get_custom_field( '_genesis_title', $post_id ) )
+			$title = genesis_get_custom_field( '_genesis_title', $post_id );
 		//* All-in-One SEO Pack Title (latest, vestigial)
-		elseif ( genesis_get_custom_field( '_aioseop_title' ) )
-			$title = genesis_get_custom_field( '_aioseop_title' );
+		elseif ( genesis_get_custom_field( '_aioseop_title', $post_id ) )
+			$title = genesis_get_custom_field( '_aioseop_title', $post_id );
 		//* Headspace Title (vestigial)
-		elseif ( genesis_get_custom_field( '_headspace_page_title' ) )
-			$title = genesis_get_custom_field( '_headspace_page_title' );
+		elseif ( genesis_get_custom_field( '_headspace_page_title', $post_id ) )
+			$title = genesis_get_custom_field( '_headspace_page_title', $post_id );
 		//* Thesis Title (vestigial)
-		elseif ( genesis_get_custom_field( 'thesis_title' ) )
-			$title = genesis_get_custom_field( 'thesis_title' );
+		elseif ( genesis_get_custom_field( 'thesis_title', $post_id ) )
+			$title = genesis_get_custom_field( 'thesis_title', $post_id );
 		//* SEO Title Tag (vestigial)
-		elseif ( genesis_get_custom_field( 'title_tag' ) )
-			$title = genesis_get_custom_field( 'title_tag' );
+		elseif ( genesis_get_custom_field( 'title_tag', $post_id ) )
+			$title = genesis_get_custom_field( 'title_tag', $post_id );
 		//* All-in-One SEO Pack Title (old, vestigial)
-		elseif ( genesis_get_custom_field( 'title' ) )
-			$title = genesis_get_custom_field( 'title' );
+		elseif ( genesis_get_custom_field( 'title', $post_id ) )
+			$title = genesis_get_custom_field( 'title', $post_id );
 	}
 
 	if ( is_category() ) {
@@ -226,35 +232,41 @@ add_action( 'genesis_meta', 'genesis_seo_meta_description' );
  * @uses genesis_get_seo_option()   Get SEO setting value.
  * @uses genesis_get_custom_field() Get custom field value.
  *
- * @global WP_Query $wp_query Query object
+ * @global WP_Query $wp_query Query object.
  */
 function genesis_seo_meta_description() {
-
 	global $wp_query;
 
 	$description = '';
+	$post_id = null;
 
-	//* If we're on the home page
-	if ( is_front_page() )
+	//* If we're on the root page
+	if ( genesis_is_root_page() ) {
 		$description = genesis_get_seo_option( 'home_description' ) ? genesis_get_seo_option( 'home_description' ) : get_bloginfo( 'description' );
+	}
+
+	//* When the page is set as the Posts Page in WordPress core, use the $post_id of the page when loading SEO values
+	if ( is_home() && get_option( 'page_for_posts' ) && get_queried_object_id() ) {
+		$post_id = get_option( 'page_for_posts' );
+	}
 
 	//* If we're on a single post / page / attachment
-	if ( is_singular() ) {
+	if ( is_singular() || null !== $post_id ) {
 		//* Description is set via custom field
-		if ( genesis_get_custom_field( '_genesis_description' ) )
-			$description = genesis_get_custom_field( '_genesis_description' );
+		if ( genesis_get_custom_field( '_genesis_description', $post_id ) )
+			$description = genesis_get_custom_field( '_genesis_description', $post_id );
 		//* All-in-One SEO Pack (latest, vestigial)
-		elseif ( genesis_get_custom_field( '_aioseop_description' ) )
-			$description = genesis_get_custom_field( '_aioseop_description' );
+		elseif ( genesis_get_custom_field( '_aioseop_description', $post_id ) )
+			$description = genesis_get_custom_field( '_aioseop_description', $post_id );
 		//* Headspace2 (vestigial)
-		elseif ( genesis_get_custom_field( '_headspace_description' ) )
-			$description = genesis_get_custom_field( '_headspace_description' );
+		elseif ( genesis_get_custom_field( '_headspace_description', $post_id ) )
+			$description = genesis_get_custom_field( '_headspace_description', $post_id );
 		//* Thesis (vestigial)
-		elseif ( genesis_get_custom_field( 'thesis_description' ) )
-			$description = genesis_get_custom_field( 'thesis_description' );
+		elseif ( genesis_get_custom_field( 'thesis_description', $post_id ) )
+			$description = genesis_get_custom_field( 'thesis_description', $post_id );
 		//* All-in-One SEO Pack (old, vestigial)
-		elseif ( genesis_get_custom_field( 'description' ) )
-			$description = genesis_get_custom_field( 'description' );
+		elseif ( genesis_get_custom_field( 'description', $post_id ) )
+			$description = genesis_get_custom_field( 'description', $post_id );
 	}
 
 	if ( is_category() ) {
@@ -284,9 +296,9 @@ function genesis_seo_meta_description() {
 	}
 
 	//* Add the description if one exists
-	if ( $description )
+	if ( $description ) {
 		echo '<meta name="description" content="' . esc_attr( $description ) . '" />' . "\n";
-
+	}
 }
 
 add_action( 'genesis_meta', 'genesis_seo_meta_keywords' );
@@ -300,32 +312,39 @@ add_action( 'genesis_meta', 'genesis_seo_meta_keywords' );
  * @uses genesis_get_seo_option()   Get SEO setting value.
  * @uses genesis_get_custom_field() Get custom field value.
  *
- * @global WP_Query $wp_query Query object
+ * @global WP_Query $wp_query Query object.
  */
 function genesis_seo_meta_keywords() {
 
 	global $wp_query;
 
 	$keywords = '';
+	$post_id = null;
 
-	//* If we're on the home page
-	if ( is_front_page() )
+	//* If we're on the root page
+	if ( genesis_is_root_page() ) {
 		$keywords = genesis_get_seo_option( 'home_keywords' );
+	}
+
+	//* When the page is set as the Posts Page in WordPress core, use the $post_id of the page when loading SEO values
+	if ( is_home() && get_option( 'page_for_posts' ) && get_queried_object_id() ) {
+		$post_id = get_option( 'page_for_posts' );
+	}
 
 	//* If we're on a single post, page or attachment
-	if ( is_singular() ) {
+	if ( is_singular() || null !== $post_id ) {
 		//* Keywords are set via custom field
-		if ( genesis_get_custom_field( '_genesis_keywords' ) )
-			$keywords = genesis_get_custom_field( '_genesis_keywords' );
+		if ( genesis_get_custom_field( '_genesis_keywords', $post_id ) )
+			$keywords = genesis_get_custom_field( '_genesis_keywords', $post_id );
 		//* All-in-One SEO Pack (latest, vestigial)
-		elseif ( genesis_get_custom_field( '_aioseop_keywords' ) )
-			$keywords = genesis_get_custom_field( '_aioseop_keywords' );
+		elseif ( genesis_get_custom_field( '_aioseop_keywords', $post_id ) )
+			$keywords = genesis_get_custom_field( '_aioseop_keywords', $post_id );
 		//* Thesis (vestigial)
-		elseif ( genesis_get_custom_field( 'thesis_keywords' ) )
-			$keywords = genesis_get_custom_field( 'thesis_keywords' );
+		elseif ( genesis_get_custom_field( 'thesis_keywords', $post_id ) )
+			$keywords = genesis_get_custom_field( 'thesis_keywords', $post_id );
 		//* All-in-One SEO Pack (old, vestigial)
-		elseif ( genesis_get_custom_field( 'keywords' ) )
-			$keywords = genesis_get_custom_field( 'keywords' );
+		elseif ( genesis_get_custom_field( 'keywords', $post_id ) )
+			$keywords = genesis_get_custom_field( 'keywords', $post_id );
 	}
 
 	if ( is_category() ) {
@@ -353,9 +372,9 @@ function genesis_seo_meta_keywords() {
 	}
 
 	//* Add the keywords if they exist
-	if ( $keywords )
+	if ( $keywords ) {
 		echo '<meta name="keywords" content="' . esc_attr( $keywords ) . '" />' . "\n";
-
+	}
 }
 
 add_action( 'genesis_meta', 'genesis_robots_meta' );
@@ -374,10 +393,12 @@ add_action( 'genesis_meta', 'genesis_robots_meta' );
 function genesis_robots_meta() {
 
 	global $wp_query;
+	$post_id = null;
 
 	//* If the blog is private, then following logic is unnecessary as WP will insert noindex and nofollow
-	if ( ! get_option( 'blog_public' ) )
+	if ( ! get_option( 'blog_public' ) ) {
 		return;
+	}
 
 	//* Defaults
 	$meta = array(
@@ -388,8 +409,8 @@ function genesis_robots_meta() {
 		'noydir'    => genesis_get_seo_option( 'noydir' ) ? 'noydir' : '',
 	);
 
-	//* Check home page SEO settings, set noindex, nofollow and noarchive
-	if ( is_front_page() ) {
+	//* Check root page SEO settings, set noindex, nofollow and noarchive
+	if ( genesis_is_root_page() ) {
 		$meta['noindex']   = genesis_get_seo_option( 'home_noindex' ) ? 'noindex' : $meta['noindex'];
 		$meta['nofollow']  = genesis_get_seo_option( 'home_nofollow' ) ? 'nofollow' : $meta['nofollow'];
 		$meta['noarchive'] = genesis_get_seo_option( 'home_noarchive' ) ? 'noarchive' : $meta['noarchive'];
@@ -405,9 +426,6 @@ function genesis_robots_meta() {
 		$meta['noindex']   = genesis_get_seo_option( 'noindex_cat_archive' ) ? 'noindex' : $meta['noindex'];
 		$meta['noarchive'] = genesis_get_seo_option( 'noarchive_cat_archive' ) ? 'noarchive' : $meta['noarchive'];
 
-		//* noindex paged archives, if canonical archives is off
-		$paged = get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1;
-		$meta['noindex'] = $paged > 1 && ! genesis_get_seo_option( 'canonical_archives' ) ? 'noindex' : $meta['noindex'];
 	}
 
 	if ( is_tag() ) {
@@ -420,9 +438,6 @@ function genesis_robots_meta() {
 		$meta['noindex']   = genesis_get_seo_option( 'noindex_tag_archive' ) ? 'noindex' : $meta['noindex'];
 		$meta['noarchive'] = genesis_get_seo_option( 'noarchive_tag_archive' ) ? 'noarchive' : $meta['noarchive'];
 
-		//* noindex paged archives, if canonical archives is off
-		$paged = get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1;
-		$meta['noindex'] = $paged > 1 && ! genesis_get_seo_option( 'canonical_archives' ) ? 'noindex' : $meta['noindex'];
 	}
 
 	if ( is_tax() ) {
@@ -432,22 +447,18 @@ function genesis_robots_meta() {
 		$meta['nofollow']  = $term->meta['nofollow'] ? 'nofollow' : $meta['nofollow'];
 		$meta['noarchive'] = $term->meta['noarchive'] ? 'noarchive' : $meta['noarchive'];
 
-		//* noindex paged archives, if canonical archives is off
-		$paged = get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1;
-		$meta['noindex'] = $paged > 1 && ! genesis_get_seo_option( 'canonical_archives' ) ? 'noindex' : $meta['noindex'];
 	}
 
 	if ( is_post_type_archive() && genesis_has_post_type_archive_support() ) {
+
 		$meta['noindex']   = genesis_get_cpt_option( 'noindex' ) ? 'noindex' : $meta['noindex'];
 		$meta['nofollow']  = genesis_get_cpt_option( 'nofollow' ) ? 'nofollow' : $meta['nofollow'];
 		$meta['noarchive'] = genesis_get_cpt_option( 'noarchive' ) ? 'noarchive' : $meta['noarchive'];
 
-		//* noindex paged archives, if canonical archives is off
-		$paged = get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1;
-		$meta['noindex'] = $paged > 1 && ! genesis_get_seo_option( 'canonical_archives' ) ? 'noindex' : $meta['noindex'];
 	}
 
 	if ( is_author() ) {
+
 		$meta['noindex']   = get_the_author_meta( 'noindex', (int) get_query_var( 'author' ) ) ? 'noindex' : $meta['noindex'];
 		$meta['nofollow']  = get_the_author_meta( 'nofollow', (int) get_query_var( 'author' ) ) ? 'nofollow' : $meta['nofollow'];
 		$meta['noarchive'] = get_the_author_meta( 'noarchive', (int) get_query_var( 'author' ) ) ? 'noarchive' : $meta['noarchive'];
@@ -455,9 +466,6 @@ function genesis_robots_meta() {
 		$meta['noindex']   = genesis_get_seo_option( 'noindex_author_archive' ) ? 'noindex' : $meta['noindex'];
 		$meta['noarchive'] = genesis_get_seo_option( 'noarchive_author_archive' ) ? 'noarchive' : $meta['noarchive'];
 
-		//* noindex paged archives, if canonical archives is off
-		$paged = get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1;
-		$meta['noindex'] = $paged > 1 && ! genesis_get_seo_option( 'canonical_archives' ) ? 'noindex' : $meta['noindex'];
 	}
 
 	if ( is_date() ) {
@@ -470,10 +478,15 @@ function genesis_robots_meta() {
 		$meta['noarchive'] = genesis_get_seo_option( 'noarchive_search_archive' ) ? 'noarchive' : $meta['noarchive'];
 	}
 
-	if ( is_singular() ) {
-		$meta['noindex']   = genesis_get_custom_field( '_genesis_noindex' ) ? 'noindex' : $meta['noindex'];
-		$meta['nofollow']  = genesis_get_custom_field( '_genesis_nofollow' ) ? 'nofollow' : $meta['nofollow'];
-		$meta['noarchive'] = genesis_get_custom_field( '_genesis_noarchive' ) ? 'noarchive' : $meta['noarchive'];
+	//* When the page is set as the Posts Page in WordPress core, use the $post_id of the page when loading SEO values
+	if ( is_home() && get_option( 'page_for_posts' ) && get_queried_object_id() ) {
+		$post_id = get_option( 'page_for_posts' );
+	}
+
+	if ( is_singular() || null !== $post_id ) {
+		$meta['noindex']   = genesis_get_custom_field( '_genesis_noindex', $post_id ) ? 'noindex' : $meta['noindex'];
+		$meta['nofollow']  = genesis_get_custom_field( '_genesis_nofollow', $post_id ) ? 'nofollow' : $meta['nofollow'];
+		$meta['noarchive'] = genesis_get_custom_field( '_genesis_noarchive', $post_id ) ? 'noarchive' : $meta['noarchive'];
 	}
 
 	//* Strip empty array items
@@ -520,6 +533,11 @@ add_action( 'wp_head', 'genesis_load_favicon' );
  */
 function genesis_load_favicon() {
 
+	//* Use WP site icon, if available
+	if ( function_exists( 'has_site_icon' ) && has_site_icon() ) {
+		return;
+	}
+
 	//* Allow child theme to short-circuit this function
 	$pre = apply_filters( 'genesis_pre_load_favicon', false );
 
@@ -556,6 +574,93 @@ function genesis_do_meta_pingback() {
 
 }
 
+add_action( 'wp_head', 'genesis_paged_rel' );
+/**
+ * Output rel links in the head to indicate previous and next pages in paginated archives and posts.
+ *
+ * @link  http://googlewebmastercentral.blogspot.com/2011/09/pagination-with-relnext-and-relprev.html
+ *
+ * @since 2.2.0
+ */
+function genesis_paged_rel() {
+
+	global $wp_query;
+
+	$prev = $next = '';
+
+	$paged = intval( get_query_var( 'paged' ) );
+	$page  = intval( get_query_var( 'page' ) );
+
+	if ( ! is_singular() ) {
+
+		$prev = $paged > 1 ? get_previous_posts_page_link() : $prev;
+		$next = $paged < $wp_query->max_num_pages ? get_next_posts_page_link() : $next;
+
+	} else {
+
+		//* No need for this on previews
+		if ( is_preview() ) {
+			return '';
+		}
+
+		$numpages = substr_count( $wp_query->post->post_content, '<!--nextpage-->' ) + 1;
+
+		if ( $numpages && ! $page ) {
+			$page = 1;
+		}
+
+		if ( $page > 1 ) {
+			$prev = genesis_paged_post_url( $page - 1 );
+		}
+
+		if ( $page < $numpages ) {
+			$next = genesis_paged_post_url( $page + 1 );
+		}
+
+	}
+
+	if ( $prev ) {
+		printf( '<link rel="prev" href="%s" />' . "\n", esc_url( $prev ) );
+	}
+
+	if ( $next ) {
+		printf( '<link rel="next" href="%s" />' . "\n", esc_url( $next ) );
+	}
+
+}
+
+add_action( 'wp_head', 'genesis_meta_name' );
+/**
+ * Output meta tag for site name.
+ *
+ * @since 2.2.0
+ */
+function genesis_meta_name() {
+
+	if ( ! genesis_html5() || ! is_front_page() ) {
+		return;
+	}
+
+	printf( '<meta itemprop="name" content="%s" />' . "\n", get_bloginfo( 'name' ) );
+
+}
+
+add_action( 'wp_head', 'genesis_meta_url' );
+/**
+ * Output meta tag for site URL.
+ *
+ * @since 2.2.0
+ */
+function genesis_meta_url() {
+
+	if ( ! genesis_html5() || ! is_front_page() ) {
+		return;
+	}
+
+	printf( '<meta itemprop="url" content="%s" />' . "\n", trailingslashit( home_url() ) );
+
+}
+
 add_action( 'wp_head', 'genesis_canonical', 5 );
 /**
  * Echo custom canonical link tag.
@@ -577,75 +682,10 @@ function genesis_canonical() {
 	//* Remove the WordPress canonical
 	remove_action( 'wp_head', 'rel_canonical' );
 
-	global $wp_query;
+	$canonical = genesis_canonical_url();
 
-	$canonical = '';
-
-	if ( is_front_page() )
-		$canonical = trailingslashit( home_url() );
-
-	if ( is_singular() ) {
-		if ( ! $id = $wp_query->get_queried_object_id() )
-			return;
-
-		$cf = genesis_get_custom_field( '_genesis_canonical_uri' );
-
-		$canonical = $cf ? $cf : get_permalink( $id );
-	}
-
-	if ( is_category() || is_tag() || is_tax() ) {
-		if ( ! $id = $wp_query->get_queried_object_id() )
-			return;
-
-		$taxonomy = $wp_query->queried_object->taxonomy;
-
-		$canonical = genesis_get_seo_option( 'canonical_archives' ) ? get_term_link( (int) $id, $taxonomy ) : 0;
-	}
-
-	if ( is_author() ) {
-		if ( ! $id = $wp_query->get_queried_object_id() )
-			return;
-
-		$canonical = genesis_get_seo_option( 'canonical_archives' ) ? get_author_posts_url( $id ) : 0;
-	}
-
-	if ( $canonical )
+	if ( $canonical ) {
 		printf( '<link rel="canonical" href="%s" />' . "\n", esc_url( apply_filters( 'genesis_canonical', $canonical ) ) );
-
-}
-
-add_action( 'wp_head', 'genesis_rel_author' );
-/**
- * Echo custom rel="author" link tag.
- *
- * If the appropriate information has been entered, either for the homepage author, or for an individual post/page
- * author, echo a custom rel="author" link.
- *
- * @since 1.9.0
- *
- * @uses genesis_get_seo_option() Get SEO setting value.
- *
- * @global WP_Post $post Post object.
- *
- * @return null Return null on failure.
- */
-function genesis_rel_author() {
-
-	if ( is_front_page() && $gplus_url = get_user_option( 'googleplus', genesis_get_seo_option( 'home_author' ) ) ) {
-		printf( '<link rel="author" href="%s" />' . "\n", esc_url( $gplus_url ) );
-		return;
-	}
-
-	global $post;
-
-	if ( is_singular() && isset( $post->post_author ) && $gplus_url = get_user_option( 'googleplus', $post->post_author ) ) {
-		printf( '<link rel="author" href="%s" />' . "\n", esc_url( $gplus_url ) );
-		return;
-	}
-
-	if ( is_author() && get_query_var( 'author' ) && $gplus_url = get_user_option( 'googleplus', get_query_var( 'author' ) ) ) {
-		printf( '<link rel="author" href="%s" />' . "\n", esc_url( $gplus_url ) );
-		return;
 	}
 
 }
@@ -690,11 +730,11 @@ add_action( 'after_setup_theme', 'genesis_custom_header' );
  */
 function genesis_custom_header() {
 
-	$custom_header = get_theme_support( 'genesis-custom-header' );
+	$genesis_custom_header = get_theme_support( 'genesis-custom-header' );
 	$wp_custom_header = get_theme_support( 'custom-header' );
 
-	//* If not active (Genesis of WP custom header), do nothing
-	if ( ! $custom_header && ! $wp_custom_header )
+	//* If not active (Genesis or WP custom header), do nothing
+	if ( ! $genesis_custom_header && ! $wp_custom_header )
 		return;
 
 	//* Blog title option is obsolete when custom header is active
@@ -705,11 +745,11 @@ function genesis_custom_header() {
 		return;
 
 	//* Cast, if necessary
-	$custom_header = isset( $custom_header[0] ) && is_array( $custom_header[0] ) ? $custom_header[0] : array();
+	$genesis_custom_header = isset( $genesis_custom_header[0] ) && is_array( $genesis_custom_header[0] ) ? $genesis_custom_header[0] : array();
 
 	//* Merge defaults with passed arguments
 	$args = wp_parse_args(
-		$custom_header,
+		$genesis_custom_header,
 		apply_filters(
 			'genesis_custom_header_defaults',
 			array(
@@ -857,8 +897,9 @@ function genesis_do_header() {
 	echo '</div>';
 
 	if ( ( isset( $wp_registered_sidebars['header-right'] ) && is_active_sidebar( 'header-right' ) ) || has_action( 'genesis_header_right' ) ) {
+
 		genesis_markup( array(
-			'html5'   => '<aside %s>',
+			'html5'   => '<div %s>' . genesis_sidebar_title( 'header-right' ),
 			'xhtml'   => '<div class="widget-area header-widget-area">',
 			'context' => 'header-widget-area',
 		) );
@@ -870,10 +911,8 @@ function genesis_do_header() {
 			remove_filter( 'wp_nav_menu_args', 'genesis_header_menu_args' );
 			remove_filter( 'wp_nav_menu', 'genesis_header_menu_wrap' );
 
-		genesis_markup( array(
-			'html5' => '</aside>',
-			'xhtml' => '</div>',
-		) );
+		echo '</div>';
+
 	}
 
 }
@@ -894,16 +933,30 @@ add_action( 'genesis_site_title', 'genesis_seo_site_title' );
 function genesis_seo_site_title() {
 
 	//* Set what goes inside the wrapping tags
-	$inside = sprintf( '<a href="%s" title="%s">%s</a>', trailingslashit( home_url() ), esc_attr( get_bloginfo( 'name' ) ), get_bloginfo( 'name' ) );
+	$inside = sprintf( '<a href="%s">%s</a>', trailingslashit( home_url() ), get_bloginfo( 'name' ) );
 
 	//* Determine which wrapping tags to use
-	$wrap = is_home() && 'title' === genesis_get_seo_option( 'home_h1_on' ) ? 'h1' : 'p';
+	$wrap = genesis_is_root_page() && 'title' === genesis_get_seo_option( 'home_h1_on' ) ? 'h1' : 'p';
 
 	//* A little fallback, in case an SEO plugin is active
-	$wrap = is_home() && ! genesis_get_seo_option( 'home_h1_on' ) ? 'h1' : $wrap;
+	$wrap = genesis_is_root_page() && ! genesis_get_seo_option( 'home_h1_on' ) ? 'h1' : $wrap;
+
+	//* Wrap homepage site title in p tags if static front page
+	$wrap = is_front_page() && ! is_home() ? 'p' : $wrap;
 
 	//* And finally, $wrap in h1 if HTML5 & semantic headings enabled
 	$wrap = genesis_html5() && genesis_get_seo_option( 'semantic_headings' ) ? 'h1' : $wrap;
+
+	/**
+	 * Site title wrapping element
+	 *
+	 * The wrapping element for the site title.
+	 *
+	 * @since 2.2.3
+	 *
+	 * @param string $wrap The wrapping element (h1, h2, p, etc.).
+	 */
+	$wrap = apply_filters( 'genesis_site_title_wrap', $wrap );
 
 	//* Build the title
 	$title  = genesis_html5() ? sprintf( "<{$wrap} %s>", genesis_attr( 'site-title' ) ) : sprintf( '<%s id="title">%s</%s>', $wrap, $inside, $wrap );
@@ -933,10 +986,24 @@ function genesis_seo_site_description() {
 	$inside = esc_html( get_bloginfo( 'description' ) );
 
 	//* Determine which wrapping tags to use
-	$wrap = is_home() && 'description' === genesis_get_seo_option( 'home_h1_on' ) ? 'h1' : 'p';
+	$wrap = genesis_is_root_page() && 'description' === genesis_get_seo_option( 'home_h1_on' ) ? 'h1' : 'p';
+
+	//* Wrap homepage site description in p tags if static front page
+	$wrap = is_front_page() && ! is_home() ? 'p' : $wrap;
 
 	//* And finally, $wrap in h2 if HTML5 & semantic headings enabled
 	$wrap = genesis_html5() && genesis_get_seo_option( 'semantic_headings' ) ? 'h2' : $wrap;
+
+	/**
+	 * Site description wrapping element
+	 *
+	 * The wrapping element for the site description.
+	 *
+	 * @since 2.2.3
+	 *
+	 * @param string $wrap The wrapping element (h1, h2, p, etc.).
+	 */
+	$wrap = apply_filters( 'genesis_site_description_wrap', $wrap );
 
 	//* Build the description
 	$description  = genesis_html5() ? sprintf( "<{$wrap} %s>", genesis_attr( 'site-description' ) ) : sprintf( '<%s id="description">%s</%s>', $wrap, $inside, $wrap );
@@ -964,6 +1031,8 @@ function genesis_seo_site_description() {
 function genesis_header_menu_args( $args ) {
 
 	$args['container']   = genesis_html5() ? '' : 'div';
+	$args['link_before'] = $args['link_before'] ? $args['link_before'] : sprintf( '<span %s>', genesis_attr( 'nav-link-wrap' ) );
+	$args['link_after']  = $args['link_after'] ? $args['link_after'] : '</span>';
 	$args['menu_class'] .= ' genesis-nav-menu';
 	$args['menu_class'] .= genesis_superfish_enabled() ? ' js-superfish' : '';
 
@@ -989,4 +1058,75 @@ function genesis_header_menu_wrap( $menu ) {
 
 	return sprintf( '<nav %s>', genesis_attr( 'nav-header' ) ) . $menu . '</nav>';
 
+}
+
+add_action ( 'genesis_before_header', 'genesis_skip_links', 5 );
+/**
+ * Add skiplinks for screen readers and keyboard navigation
+ *
+ * @since  2.2.0
+ */
+function genesis_skip_links() {
+
+	if ( ! genesis_a11y( 'skip-links' ) ) {
+		return;
+	}
+
+	// Call function to add IDs to the markup
+	genesis_skiplinks_markup();
+
+	// Determine which skip links are needed
+	$links = array();
+
+	if ( genesis_nav_menu_supported( 'primary' ) && has_nav_menu( 'primary' ) ) {
+		$links['genesis-nav-primary'] =  __( 'Skip to primary navigation', 'genesis' );
+	}
+
+	$links['genesis-content'] = __( 'Skip to content', 'genesis' );
+
+	if ( 'full-width-content' != genesis_site_layout() ) {
+		$links['genesis-sidebar-primary'] = __( 'Skip to primary sidebar', 'genesis' );
+	}
+
+	if ( in_array( genesis_site_layout(), array( 'sidebar-sidebar-content', 'sidebar-content-sidebar', 'content-sidebar-sidebar' ) ) ) {
+		$links['genesis-sidebar-secondary'] = __( 'Skip to secondary sidebar', 'genesis' );
+	}
+
+	if ( current_theme_supports( 'genesis-footer-widgets' ) ) {
+		$footer_widgets = get_theme_support( 'genesis-footer-widgets' );
+		if ( isset( $footer_widgets[0] ) && is_numeric( $footer_widgets[0] ) ) {
+			if ( is_active_sidebar( 'footer-1' ) ) {
+				$links['genesis-footer-widgets'] = __( 'Skip to footer', 'genesis' );
+			}
+		}
+	}
+
+	 /**
+	 * Filter the skip links.
+	 *
+	 * @since 2.2.0
+	 *
+	 * @param array $links {
+	 *     Default skiplinks.
+	 *
+	 *     @type string HTML ID attribute value to link to.
+	 *     @type string Anchor text.
+	 * }
+	 */
+	$links = apply_filters( 'genesis_skip_links_output', $links );
+
+	// write HTML, skiplinks in a list with a heading
+	$skiplinks  =  '<section>';
+	$skiplinks .=  '<h2 class="screen-reader-text">'. __( 'Skip links', 'genesis' ) .'</h2>';
+	$skiplinks .=  '<ul class="genesis-skip-link">';
+
+	// Add markup for each skiplink
+	foreach ($links as $key => $value) {
+		$skiplinks .=  '<li><a href="' . esc_url( '#' . $key ) . '" class="screen-reader-shortcut"> ' . $value . '</a></li>';
+	}
+
+	$skiplinks .=  '</ul>';
+	$skiplinks .=  '</section>' . "\n";
+
+	echo $skiplinks;
 }

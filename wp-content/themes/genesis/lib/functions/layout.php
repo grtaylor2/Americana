@@ -36,24 +36,25 @@ function genesis_create_initial_layouts() {
 
 	$layouts = apply_filters( 'genesis_initial_layouts', array(
 		'content-sidebar' => array(
-			'label'   => __( 'Content-Sidebar', 'genesis' ),
+			'label'   => __( 'Content, Primary Sidebar', 'genesis' ),
 			'img'     => $url . 'cs.gif',
-			'default' => true,
+			'default' => is_rtl() ? false : true,
 		),
 		'sidebar-content' => array(
-			'label' => __( 'Sidebar-Content', 'genesis' ),
-			'img'   => $url . 'sc.gif',
+			'label'   => __( 'Primary Sidebar, Content', 'genesis' ),
+			'img'     => $url . 'sc.gif',
+			'default' => is_rtl() ? true : false,
 		),
 		'content-sidebar-sidebar' => array(
-			'label' => __( 'Content-Sidebar-Sidebar', 'genesis' ),
+			'label' => __( 'Content, Primary Sidebar, Secondary Sidebar', 'genesis' ),
 			'img'   => $url . 'css.gif',
 		),
 		'sidebar-sidebar-content' => array(
-			'label' => __( 'Sidebar-Sidebar-Content', 'genesis' ),
+			'label' => __( 'Secondary Sidebar, Primary Sidebar, Content', 'genesis' ),
 			'img'   => $url . 'ssc.gif',
 		),
 		'sidebar-content-sidebar' => array(
-			'label' => __( 'Sidebar-Content-Sidebar', 'genesis' ),
+			'label' => __( 'Secondary Sidebar, Content, Primary Sidebar', 'genesis' ),
 			'img'   => $url . 'scs.gif',
 		),
 		'full-width-content' => array(
@@ -62,8 +63,9 @@ function genesis_create_initial_layouts() {
 		),
 	), $url );
 
-	foreach ( (array) $layouts as $layout_id => $layout_args )
+	foreach ( (array) $layouts as $layout_id => $layout_args ) {
 		genesis_register_layout( $layout_id, $layout_args );
+	}
 
 }
 
@@ -422,8 +424,8 @@ function genesis_layout_selector( $args = array() ) {
 		$class = $id == $args['selected'] ? ' selected' : '';
 
 		$output .= sprintf(
-			'<label title="%1$s" class="box%2$s"><img src="%3$s" alt="%1$s" /><br /> <input type="radio" name="%4$s" id="%5$s" value="%5$s" %6$s /></label>',
-            esc_attr( $data['label'] ),
+			'<label class="box%2$s" for="%5$s"><span class="screen-reader-text">%1$s </span><img src="%3$s" alt="%1$s" /><input type="radio" name="%4$s" id="%5$s" value="%5$s" %6$s class="screen-reader-text" /></label>',
+			esc_attr( $data['label'] ),
 			esc_attr( $class ),
 			esc_url( $data['img'] ),
 			esc_attr( $args['name'] ),
@@ -491,7 +493,7 @@ function genesis_structural_wrap( $context = '', $output = 'open', $echo = true 
 			break;
 	}
 
-	apply_filters( 'genesis_structural_wrap-' . $context, $output, $original_output );
+	$output = apply_filters( "genesis_structural_wrap-{$context}", $output, $original_output );
 
 	if ( $echo )
 		echo $output;

@@ -63,11 +63,18 @@ function genesis_theme_support() {
 	if ( ! current_theme_supports( 'genesis-structural-wraps' ) )
 		add_theme_support( 'genesis-structural-wraps', array( 'header', 'menu-primary', 'menu-secondary', 'footer-widgets', 'footer' ) );
 
-	//* Turn on HTML5, responsive viewport & footer widgets if Genesis is active
+	//* Turn on HTML5 and responsive viewport if Genesis is active
 	if ( ! is_child_theme() ) {
-		add_theme_support( 'html5' );
+		add_theme_support( 'html5', array( 'comment-list', 'comment-form', 'search-form', 'gallery', 'caption'  ) );
 		add_theme_support( 'genesis-responsive-viewport' );
-		add_theme_support( 'genesis-footer-widgets', 3 );
+		add_theme_support( 'genesis-accessibility', array(
+			'404-page',
+			'drop-down-menu',
+			'headings',
+			'rems',
+			'search-form',
+			'skip-links',
+		) );
 	}
 
 }
@@ -80,8 +87,27 @@ add_action( 'genesis_init', 'genesis_post_type_support' );
  */
 function genesis_post_type_support() {
 
-	add_post_type_support( 'post', array( 'genesis-seo', 'genesis-scripts', 'genesis-layouts' ) );
+	add_post_type_support( 'post', array( 'genesis-seo', 'genesis-scripts', 'genesis-layouts', 'genesis-rel-author' ) );
 	add_post_type_support( 'page', array( 'genesis-seo', 'genesis-scripts', 'genesis-layouts' ) );
+
+}
+
+add_action( 'init', 'genesis_post_type_support_post_meta', 11 );
+/**
+ * Add post type support for post meta to all post types except page.
+ *
+ * @since 2.2.0
+ */
+function genesis_post_type_support_post_meta() {
+
+	$public_post_types = get_post_types( array( 'public' => true ) );
+
+	foreach ( $public_post_types as $post_type ) {
+		if ( 'page' !== $post_type ) {
+			add_post_type_support( $post_type, 'genesis-entry-meta-before-content' );
+			add_post_type_support( $post_type, 'genesis-entry-meta-after-content' );
+		}
+	}
 
 }
 
@@ -95,10 +121,10 @@ function genesis_constants() {
 
 	//* Define Theme Info Constants
 	define( 'PARENT_THEME_NAME', 'Genesis' );
-	define( 'PARENT_THEME_VERSION', '2.0.1' );
-	define( 'PARENT_THEME_BRANCH', '2.0' );
-	define( 'PARENT_DB_VERSION', '2007' );
-	define( 'PARENT_THEME_RELEASE_DATE', date_i18n( 'F j, Y', '1377061200' ) );
+	define( 'PARENT_THEME_VERSION', '2.2.3' );
+	define( 'PARENT_THEME_BRANCH', '2.2' );
+	define( 'PARENT_DB_VERSION', '2206' );
+	define( 'PARENT_THEME_RELEASE_DATE', date_i18n( 'F j, Y', '1444608000' ) );
 #	define( 'PARENT_THEME_RELEASE_DATE', 'TBD' );
 
 	//* Define Directory Location Constants
@@ -152,6 +178,8 @@ add_action( 'genesis_init', 'genesis_load_framework' );
  * files are loaded.
  *
  * @since 1.6.0
+ *
+ * @global $_genesis_formatting_allowed_tags Array of allowed tags for output formatting.
  */
 function genesis_load_framework() {
 
@@ -159,7 +187,7 @@ function genesis_load_framework() {
 	do_action( 'genesis_pre_framework' );
 
 	//* Short circuit, if necessary
-	if ( defined( 'GENESIS_LOAD_FRAMEWORK' ) && GENESIS_LOAD_FRAMEWORK === false )
+	if ( defined( 'GENESIS_LOAD_FRAMEWORK' ) && false === GENESIS_LOAD_FRAMEWORK )
 		return;
 
 	//* Load Framework
@@ -213,6 +241,7 @@ function genesis_load_framework() {
 	require_once( GENESIS_ADMIN_DIR . '/inpost-metaboxes.php' );
 	require_once( GENESIS_ADMIN_DIR . '/whats-new.php' );
 	endif;
+	require_once( GENESIS_ADMIN_DIR . '/customizer.php' );
 	require_once( GENESIS_ADMIN_DIR . '/term-meta.php' );
 	require_once( GENESIS_ADMIN_DIR . '/user-meta.php' );
 
@@ -224,6 +253,11 @@ function genesis_load_framework() {
 
 	//* Load Widgets
 	require_once( GENESIS_WIDGETS_DIR . '/widgets.php' );
+
+	//* Load CLI command
+	if ( defined( 'WP_CLI' ) && WP_CLI ) {
+    	include GENESIS_CLASSES_DIR . '/cli.php';
+	}
 
 	global $_genesis_formatting_allowedtags;
 	$_genesis_formatting_allowedtags = genesis_formatting_allowedtags();

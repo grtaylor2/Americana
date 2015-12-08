@@ -60,6 +60,7 @@ add_action( 'genesis_admin_menu', 'genesis_add_admin_submenus' );
  * @see Genesis_Admin_Import_export Import / Export class
  * @see Genesis_Admin_Readme Readme class
  *
+ * @global string $_genesis_seo_settings_pagehook Old backwards-compatible pagehook.
  * @global string $_genesis_admin_seo_settings
  * @global string $_genesis_admin_import_export
  * @global string $_genesis_admin_readme

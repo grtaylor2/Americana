@@ -15,8 +15,7 @@
 // ==/ClosureCompiler==
 // http://closure-compiler.appspot.com/home
 
-/*jslint browser: true, devel: true, indent: 4, maxerr: 50, sub: true */
-/*global genesis_confirm, confirm, jQuery, genesis, genesis_toggles, genesisL10n */
+/* global genesis, genesisL10n, genesis_toggles, confirm */
 
 /**
  * Holds Genesis values in an object to avoid polluting global namespace.
@@ -25,7 +24,7 @@
  *
  * @constructor
  */
-window['genesis'] = {
+window[ 'genesis' ] = {
 
 	settingsChanged: false,
 
@@ -36,14 +35,15 @@ window['genesis'] = {
 	 *
 	 * @function
 	 */
-	category_checklist_toggle_init: function () {
+	categoryChecklistToggleInit: function() {
 		'use strict';
 
 		// Insert toggle button into DOM wherever there is a category checklist
-		jQuery('<p><span id="genesis-category-checklist-toggle" class="button">' + genesisL10n['categoryChecklistToggle'] + '</span></p>').insertBefore('ul.categorychecklist');
+		jQuery( '<p><span id="genesis-category-checklist-toggle" class="button">' + genesisL10n.categoryChecklistToggle + '</span></p>' )
+			.insertBefore( 'ul.categorychecklist' );
 
 		// Bind the behaviour to click
-		jQuery(document).on('click.genesis.genesis_category_checklist_toggle', '#genesis-category-checklist-toggle', genesis.category_checklist_toggle);
+		jQuery( document ).on( 'click.genesis.genesis_category_checklist_toggle', '#genesis-category-checklist-toggle', genesis.categoryChecklistToggle );
 	},
 
 	/**
@@ -58,20 +58,20 @@ window['genesis'] = {
 	 *
 	 * @param {jQuery.event} event
 	 */
-	category_checklist_toggle: function (event) {
+	categoryChecklistToggle: function( event ) {
 		'use strict';
 
 		// Cache the selectors
-		var $this = jQuery(event.target),
-			checkboxes = $this.parent().next().find(':checkbox');
+		var $this = jQuery( event.target ),
+			checkboxes = $this.parent().next().find( ':checkbox' );
 
 		// If the button has already been clicked once, clear the checkboxes and remove the flag
-		if ($this.data('clicked')) {
-			checkboxes.removeAttr('checked');
-			$this.data('clicked', false);
+		if ( $this.data( 'clicked' ) ) {
+			checkboxes.removeAttr( 'checked' );
+			$this.data( 'clicked', false );
 		} else { // Mark the checkboxes and add a flag
-			checkboxes.attr('checked', 'checked');
-			$this.data('clicked', true);
+			checkboxes.attr( 'checked', 'checked' );
+			$this.data( 'clicked', true );
 		}
 	},
 
@@ -86,22 +86,23 @@ window['genesis'] = {
 	 *
 	 * @function
 	 */
-	toggle_settings_init: function () {
+	toggleSettingsInit: function() {
 		'use strict';
 
-		jQuery.each(genesis_toggles, function (k, v) {
+		jQuery.each( genesis_toggles, function( k, v ) {
 
 			// Prepare data
-			var data = {selector: v[0], show_selector: v[1], check_value: v[2]};
+			var data = { selector: v[ 0 ], showSelector: v[ 1 ], checkValue: v[ 2 ] };
 
 			// Setup toggle binding
-			jQuery('div.genesis-metaboxes').on('change.genesis.genesis_toggle', v[0], data, genesis.toggle_settings);
+			jQuery( 'div.genesis-metaboxes' )
+				.on( 'change.genesis.genesis_toggle', v[ 0 ], data, genesis.toggleSettings );
 
 			// Trigger the check when page loads too.
 			// Can't use triggerHandler here, as that doesn't bubble the event up to div.genesis-metaboxes.
 			// We namespace it, so that it doesn't conflict with any other change event attached that
 			// we don't want triggered on document ready.
-			jQuery(v[0]).trigger('change.genesis_toggle', data);
+			jQuery( v[ 0 ]).trigger( 'change.genesis_toggle', data );
 		});
 
 	},
@@ -113,7 +114,7 @@ window['genesis'] = {
 	 * behaviour attached, the jQuery selector which to toggle, and the value to
 	 * check against.
 	 *
-	 * The check_value can be a single string or an array (for checking against
+	 * The checkValue can be a single string or an array (for checking against
 	 * multiple values in a dropdown) or a null value (when checking if a checkbox
 	 * has been marked).
 	 *
@@ -123,27 +124,27 @@ window['genesis'] = {
 	 *
 	 * @param {jQuery.event} event
 	 */
-	toggle_settings: function (event) {
+	toggleSettings: function( event ) {
 		'use strict';
 
 		// Cache selectors
-		var $selector = jQuery(event.data.selector),
-		    $show_selector = jQuery(event.data.show_selector),
-		    check_value = event.data.check_value;
+		var $selector = jQuery( event.data.selector ),
+		    $showSelector = jQuery( event.data.showSelector ),
+		    checkValue = event.data.checkValue;
 
-		// Compare if a check_value is an array, and one of them matches the value of the selected option
-		// OR the check_value is _unchecked, but the checkbox is not marked
-		// OR the check_value is _checked, but the checkbox is marked
+		// Compare if a checkValue is an array, and one of them matches the value of the selected option
+		// OR the checkValue is _unchecked, but the checkbox is not marked
+		// OR the checkValue is _checked, but the checkbox is marked
 		// OR it's a string, and that matches the value of the selected option.
 		if (
-			(jQuery.isArray(check_value) && jQuery.inArray($selector.val(), check_value) > -1) ||
-				('_unchecked' === check_value && $selector.is(':not(:checked)')) ||
-				('_checked' === check_value && $selector.is(':checked')) ||
-				('_unchecked' !== check_value && '_checked' !== check_value && $selector.val() === check_value)
+			( jQuery.isArray( checkValue ) && jQuery.inArray( $selector.val(), checkValue ) > -1) ||
+				( '_unchecked' === checkValue && $selector.is( ':not(:checked)' ) ) ||
+				( '_checked' === checkValue && $selector.is( ':checked' ) ) ||
+				( '_unchecked' !== checkValue && '_checked' !== checkValue && $selector.val() === checkValue )
 		) {
-			jQuery($show_selector).slideDown('fast');
+			jQuery( $showSelector ).slideDown( 'fast' );
 		} else {
-			jQuery($show_selector).slideUp('fast');
+			jQuery( $showSelector ).slideUp( 'fast' );
 		}
 
 	},
@@ -153,7 +154,7 @@ window['genesis'] = {
 	 *
 	 * For now, we can assume that the counter has the same ID as the field, with a _chars
 	 * suffix. In the future, when the counter is added to the DOM with JS, we can add
-	 * a data('counter', 'counter_id_here' ) property to the field element at the same time.
+	 * a data( 'counter', 'counter_id_here' ) property to the field element at the same time.
 	 *
 	 * @since 1.8.0
 	 *
@@ -161,10 +162,9 @@ window['genesis'] = {
 	 *
 	 * @param {jQuery.event} event
 	 */
-	update_character_count: function (event) {
+	updateCharacterCount: function( event ) {
 		'use strict';
-		//
-		jQuery('#' + event.target.id + '_chars').html(jQuery(event.target).val().length.toString());
+		jQuery( '#' + event.target.id + '_chars' ).html( jQuery( event.target ).val().length.toString() );
 	},
 
 	/**
@@ -179,17 +179,17 @@ window['genesis'] = {
 	 *
 	 * @param {jQuery.event} event
 	 */
-	layout_highlighter: function (event) {
+	layoutHighlighter: function( event ) {
 		'use strict';
 
 		// Cache class name
-		var selected_class = 'selected';
+		var selectedClass = 'selected';
 
-	    // Remove class from all labels
-	    jQuery('input[name="' + jQuery(event.target).attr('name') + '"]').parent('label').removeClass(selected_class);
+		// Remove class from all labels
+		jQuery('input[name="' + jQuery(event.target).attr('name') + '"]').parent('label').removeClass(selectedClass);
 
-	    // Add class to selected layout
-	    jQuery(event.target).parent('label').addClass(selected_class);
+		// Add class to selected layout
+		jQuery(event.currentTarget).addClass(selectedClass);
 
 	},
 
@@ -203,10 +203,10 @@ window['genesis'] = {
 	 * @param {String} text The text to display.
 	 * @returns {Boolean}
 	 */
-	confirm: function (text) {
+	confirm: function( text ) {
 		'use strict';
 
-		return confirm(text);
+		return confirm( text );
 
 	},
 
@@ -217,17 +217,18 @@ window['genesis'] = {
 	 *
 	 * @function
 	 */
-	attachUnsavedChangesListener: function () {
+	attachUnsavedChangesListener: function() {
 		'use strict';
 
-		jQuery('div.genesis-metaboxes :input').change(function(){
+		jQuery( 'div.genesis-metaboxes :input' ).change( function() {
 			genesis.registerChange();
 		});
 		window.onbeforeunload = function(){
-			if ( genesis.settingsChanged )
-				return genesisL10n['saveAlert'];
+			if ( genesis.settingsChanged ) {
+				return genesisL10n.saveAlert;
+			}
 		};
-		jQuery('div.genesis-metaboxes input[type="submit"]').click(function(){
+		jQuery( 'div.genesis-metaboxes input[type="submit"]' ).click( function() {
 			window.onbeforeunload = null;
 		});
 	},
@@ -239,7 +240,7 @@ window['genesis'] = {
 	 *
 	 * @function
 	 */
-	registerChange: function () {
+	registerChange: function() {
 		'use strict';
 
 		genesis.settingsChanged = true;
@@ -254,10 +255,10 @@ window['genesis'] = {
 	 *
 	 * @return {Boolean} True if upgrade should occur, false if not.
 	 */
-	confirmUpgrade: function () {
+	confirmUpgrade: function() {
 		'use strict';
 
-		return confirm(genesisL10n['confirmUpgrade']);
+		return confirm( genesisL10n.confirmUpgrade );
 	},
 
 	/**
@@ -269,10 +270,10 @@ window['genesis'] = {
 	 *
 	 * @return {Boolean} True if reset should occur, false if not.
 	 */
-	confirmReset: function () {
+	confirmReset: function() {
 		'use strict';
 
-		return confirm(genesisL10n['confirmReset']);
+		return confirm( genesisL10n.confirmReset );
 	},
 
 	/**
@@ -287,49 +288,52 @@ window['genesis'] = {
 	 *
 	 * @function
 	 */
-	ready: function () {
+	ready: function() {
 		'use strict';
 
 		// Move all messages below our floated buttons
-		jQuery('h2').nextAll('div.updated, div.error').insertAfter('p.top-buttons');
+		//jQuery( '#wpbody-content' ).nextAll( 'div.updated, div.error' ).insertAfter( 'p.top-buttons' );
+		jQuery('div.updated, div.error').insertAfter( 'p.top-buttons' );
 
 		// Initialise category checklist toggle button
-		genesis.category_checklist_toggle_init();
+		genesis.categoryChecklistToggleInit();
 
 		// Initialise settings that can toggle the display of other settings
-		genesis.toggle_settings_init();
+		genesis.toggleSettingsInit();
 
 		// Initialise form field changing flag.
 		genesis.attachUnsavedChangesListener();
 
 		// Bind character counters
-		jQuery('#genesis_title, #genesis_description').on('keyup.genesis.genesis_character_count', genesis.update_character_count);
+		jQuery( '#genesis_title, #genesis_description' ).on( 'keyup.genesis.genesis_character_count', genesis.updateCharacterCount );
 
 		// Bind layout highlighter behaviour
-		jQuery('.genesis-layout-selector').on('change.genesis.genesis_layout_selector', 'input[type="radio"]', genesis.layout_highlighter);
+		jQuery('.genesis-layout-selector').on('change.genesis.genesis_layout_selector', 'label', genesis.layoutHighlighter);
 
 		// Bind upgrade confirmation
-		jQuery('.genesis-js-confirm-upgrade').on('click.genesis.genesis_confirm_upgrade', genesis.confirmUpgrade);
+		jQuery( '.genesis-js-confirm-upgrade' ).on( 'click.genesis.genesis_confirm_upgrade', genesis.confirmUpgrade );
 
 		// Bind reset confirmation
-		jQuery('.genesis-js-confirm-reset').on('click.genesis.genesis_confirm_reset', genesis.confirmReset);
+		jQuery( '.genesis-js-confirm-reset' ).on( 'click.genesis.genesis_confirm_reset', genesis.confirmReset );
 
 	}
 
 };
 
-jQuery(genesis.ready);
+jQuery( genesis.ready );
 
+/* jshint ignore:start */
 /**
  * Helper function for confirming a user action.
  *
- * This function is deprecated in favour of genesis.confirm(text) which provides
+ * This function is deprecated in favour of genesis.confirm( text ) which provides
  * the same functionality.
  *
  * @since 1.0.0
  * @deprecated 1.8.0
  */
-function genesis_confirm(text) {
+function genesis_confirm( text ) {
 	'use strict';
-	return genesis.confirm(text);
+	return genesis.confirm( text );
 }
+/* jshint ignore:end */

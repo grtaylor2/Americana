@@ -57,7 +57,7 @@ add_action( 'template_redirect', 'genesis_feed_redirect' );
  */
 function genesis_feed_redirect() {
 
-	if ( ! is_feed() || preg_match( '/feedburner|feedvalidator/i', $_SERVER['HTTP_USER_AGENT'] ) )
+	if ( ! is_feed() || ( isset( $_SERVER['HTTP_USER_AGENT'] ) && preg_match( '/feed(blitz|burner|validator)/i', $_SERVER['HTTP_USER_AGENT'] ) ) )
 		return;
 
 	//* Don't redirect if viewing archive, search, or post comments feed
